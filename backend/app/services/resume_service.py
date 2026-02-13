@@ -34,20 +34,20 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 def process_resume(file_bytes: bytes, filename: str) -> Dict[str, Any]:
     """
-    Full resume processing pipeline:
+    Resume processing pipeline:
     1. Extract text from PDF
     2. Run 2-layer skill extraction (NER + Dictionary)
-    3. Return UI-ready JSON
+    3. Return UI-ready JSON (NO vectors — user confirms skills first)
     """
     logger.info(f"Processing resume: {filename}")
 
     # Step 1: Extract text
     raw_text = extract_text_from_pdf(file_bytes)
 
-    # Step 2: Run ML inference
+    # Step 2: Run ML inference (skills + experience)
     result = resume_parser.extract_skills(raw_text)
 
-    # Step 3: Build UI-ready response
+    # Step 3: Build UI-ready response (vectors generated later via /embed)
     return {
         "filename": filename,
         "raw_text": raw_text,
