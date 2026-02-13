@@ -5,3 +5,7 @@ beautifulsoup4
 playwright
 fake-useragent
 pydantic
+pdfplumber
+python-multipart
+spacy
+huggingface_hub

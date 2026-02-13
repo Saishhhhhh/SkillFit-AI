@@ -4,7 +4,8 @@ import uuid
 import logging
 from backend.app.models.job import SearchRequest
 from backend.app.services.scraper_engine import run_scraper_engine, task_registry
-from backend.app.services.cleanup import cleanup_stale_files # Import cleanup
+from backend.app.services.cleanup import cleanup_stale_files
+from backend.app.api.v1.resume import router as resume_router
 import os
 import json
 import asyncio
@@ -19,6 +20,10 @@ tags_metadata = [
         "description": "Operations related to job search and aggregation.",
     },
     {
+        "name": "Profile",
+        "description": "Resume upload, parsing, and profile management.",
+    },
+    {
         "name": "Health",
         "description": "Health check endpoints.",
     },
@@ -27,12 +32,13 @@ tags_metadata = [
 app = FastAPI(
     title="SkillFit AI Job Search API",
     description="""
-    SkillFit AI Backend API for orchestrating job scrapers.
+    SkillFit AI Backend API for orchestrating job scrapers and resume processing.
     
     ## Features
     * **Search**: Trigger async scraper agents for LinkedIn, Indeed, Glassdoor, etc.
     * **Status**: Poll task progress.
     * **Results**: Retrieve aggregated job listings.
+    * **Profile**: Upload and parse resumes to extract skills, job titles, and experience.
     """,
     version="1.0.0",
     openapi_tags=tags_metadata,
@@ -78,6 +84,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(resume_router, prefix="/api/v1/profile")
 
 @app.get("/", tags=["Health"])
 async def root():
