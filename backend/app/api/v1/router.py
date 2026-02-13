@@ -9,15 +9,18 @@ To add a new module (e.g., market, insights), just:
 
 from fastapi import APIRouter
 
-from backend.app.api.v1.endpoints import profile, jobs
+from backend.app.api.v1.endpoints import profile, jobs, vectors
 
 api_router = APIRouter()
 
 # Phase 1: Profile & Resume
-api_router.include_router(profile.router, prefix="/profile")
+api_router.include_router(profile.router, prefix="/profile", tags=["Profile"])
 
 # Phase 1: Job Search & Scraping
-api_router.include_router(jobs.router, prefix="/jobs")
+api_router.include_router(jobs.router, prefix="/jobs", tags=["Jobs"])
+
+# Vector Operations (Scoring Calculator)
+api_router.include_router(vectors.router, prefix="/vectors", tags=["Vector Operations"])
 
 # ── Future Phases ──
 # api_router.include_router(market.router, prefix="/market")       # Phase 2

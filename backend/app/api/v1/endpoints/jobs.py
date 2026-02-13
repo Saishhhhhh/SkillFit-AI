@@ -61,8 +61,9 @@ async def get_task_results(task_id: str):
         raise HTTPException(status_code=400, detail="Task is not completed yet")
 
     # Check scraper/results/ directory
+    # Path: endpoints/ → v1/ → api/ → app/ → backend/ → project_root/scraper/results/
     scraper_result_file = os.path.join(
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../scraper/results")),
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../scraper/results")),
         f"{task_id}_final_results.json"
     )
     if os.path.exists(scraper_result_file):

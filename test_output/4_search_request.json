@@ -1,0 +1,12 @@
+{
+  "query": "Data Scientist",
+  "location": "India",
+  "portals": [
+    "naukri",
+    "linkedin",
+    "indeed",
+    "glassdoor",
+    "google"
+  ],
+  "user_vectors_included": true
+}
