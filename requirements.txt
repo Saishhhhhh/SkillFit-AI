@@ -9,3 +9,5 @@ pdfplumber
 python-multipart
 spacy
 huggingface_hub
+sentence-transformers
+numpy
