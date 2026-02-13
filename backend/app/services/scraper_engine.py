@@ -1,22 +1,35 @@
+
 import subprocess
 import os
 import json
 import uuid
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 import time
+from backend.app.services.job_service import enrich_job_listings
 
 task_registry = {}
 
 SCRAPER_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../scraper"))
 
-def run_scraper_engine(task_id: str, query: str, location: str, portals: List[str], serp_api_config: Optional[Dict] = None):
+def run_scraper_engine(
+    task_id: str, 
+    query: str, 
+    location: str, 
+    portals: List[str], 
+    serp_api_config: Optional[Any] = None  # Typed as Any to handle Pydantic model or dict
+):
 
     task_registry[task_id] = {"status": "processing", "results": [], "logs": []}
     
+    # Create results directory if it doesn't exist
+    RESULTS_DIR = os.path.join(SCRAPER_DIR, "results")
+    if not os.path.exists(RESULTS_DIR):
+        os.makedirs(RESULTS_DIR)
+    
     processes = []
     
-    if "google" in portals and serp_api_config and serp_api_config.get("api_key"):
-        pass 
+    # DEBUG: Check config type
+    # print(f"Config type: {type(serp_api_config)}")
 
     temp_files = {}
 
@@ -43,26 +56,31 @@ def run_scraper_engine(task_id: str, query: str, location: str, portals: List[st
              continue
              
         output_filename = f"{task_id}_{portal}_results.json"
-        output_path = os.path.join(SCRAPER_DIR, output_filename)
+        
+        # We need the absolute path for reading later
+        output_path = os.path.join(RESULTS_DIR, output_filename)
         temp_files[portal] = output_path
 
         # Construct command
         # python script.py <query> <location> [limit] [output_file]
         limit = "10"
+        
+        # Handle Pydantic model or dict for num_jobs
         if portal == "google" and serp_api_config:
-            # Check if it's a dict or Pydantic model (depending on how it's passed)
-            # In run_scraper_engine arguments, it is typed as Optional[Dict] originally, 
-            # but main.py passes request.serp_api_config which is now a Pydantic model.
-            # I should update the type hint in run_scraper_engine too, but python runtime doesn't care.
-            # However, I need to access it correctly.
             if hasattr(serp_api_config, "num_jobs"):
                  limit = str(serp_api_config.num_jobs)
             elif isinstance(serp_api_config, dict) and "num_jobs" in serp_api_config:
                  limit = str(serp_api_config["num_jobs"])
             
-        cmd = ["python", script_path, query, location, limit, output_filename]
+        # Pass explicit path to the results/ folder so the scraper writes there
+        # Since scraper runs with CWD=SCRAPER_DIR, we pass "results/filename.json"
+        relative_output_path = os.path.join("results", output_filename)
+        
+        cmd = ["python", script_path, query, location, limit, relative_output_path]
         
         env = os.environ.copy()
+        
+        # Handle Pydantic model or dict for api_key
         if portal == "google" and serp_api_config:
              api_key = None
              if hasattr(serp_api_config, "api_key"):
@@ -74,6 +92,7 @@ def run_scraper_engine(task_id: str, query: str, location: str, portals: List[st
                 env["SERP_API_KEY"] = api_key
 
         try:
+            # Run in SCRAPER_DIR so imports work
             p = subprocess.Popen(cmd, env=env, cwd=SCRAPER_DIR) 
             processes.append((portal, p))
         except Exception as e:
@@ -102,8 +121,16 @@ def run_scraper_engine(task_id: str, query: str, location: str, portals: List[st
              task_registry[task_id]["logs"].append(f"No results file found for {portal}")
 
 
+    # Enrich jobs with extracted skills (reuses the ML engine)
+    aggregated_results = enrich_job_listings(aggregated_results)
+
     task_registry[task_id]["status"] = "completed"
-    output_file = f"{task_id}_results.json"
-    with open(output_file, "w") as f:
-        json.dump(aggregated_results, f)
     
+    # Save final enriched JSON
+    final_output_file = f"{task_id}_final_results.json"
+    final_output_path = os.path.join(RESULTS_DIR, final_output_file)
+    
+    with open(final_output_path, "w") as f:
+        json.dump(aggregated_results, f, indent=2)
+        
+    task_registry[task_id]["results_file"] = final_output_path

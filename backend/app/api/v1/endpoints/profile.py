@@ -22,14 +22,12 @@ router = APIRouter()
     """,
 )
 async def upload_resume(file: UploadFile = File(...)):
-    # Validate file type
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=400,
             detail="Only PDF files are supported. Please upload a .pdf file."
         )
 
-    # Validate file size (max 10MB)
     contents = await file.read()
     max_size = 10 * 1024 * 1024
     if len(contents) > max_size:
