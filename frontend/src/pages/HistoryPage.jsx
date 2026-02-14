@@ -61,7 +61,7 @@ export default function HistoryPage() {
             profile_id: profile.id,
             raw_text: profile.raw_text,
             confirmed_skills: profile.confirmed_skills || [],
-            // Add other fields if necessary
+            resume_path: profile.resume_path,
         });
 
         // 2. Set Job Search Context

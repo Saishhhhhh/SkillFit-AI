@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 import logging
+import uuid
 
 from backend.app.services.resume_service import process_resume
 from backend.app.services.vector_service import generate_user_vectors
@@ -47,6 +48,20 @@ async def upload_resume(file: UploadFile = File(...)):
         )
 
     try:
+        # Save file to disk
+        import os
+        upload_dir = os.path.abspath(os.path.join(os.getcwd(), "uploads/resumes"))
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        file_ext = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        file_path = os.path.join(upload_dir, unique_filename)
+        
+        with open(file_path, "wb") as f:
+            f.write(contents)
+            
+        resume_url = f"/uploads/resumes/{unique_filename}"
+        
         result = process_resume(contents, file.filename)
 
         # Save to database
@@ -56,9 +71,12 @@ async def upload_resume(file: UploadFile = File(...)):
             extracted_skills=skill_names,
             experience=result.get("experience", []),
             filename=file.filename,
+            resume_path=resume_url
         )
 
         result["profile_id"] = profile_id
+        result["resume_url"] = resume_url
+        result["resume_path"] = resume_url
         return result
 
     except ValueError as e:

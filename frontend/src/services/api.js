@@ -28,6 +28,11 @@ export const endpoints = {
   getProfileSearches: (profileId) => `/history/profiles/${profileId}/searches`,
   deleteProfile: (id) => `/history/profiles/${id}`,
   deleteSearch: (id) => `/history/searches/${id}`,
+  
+  // GenAI
+  suggestRoles: '/genai/suggest-roles',
+  generateRoadmap: '/genai/roadmap',
+  suggestPivot: '/genai/pivot',
 };
 
 export default api;

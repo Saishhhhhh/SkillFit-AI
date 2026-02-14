@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Loader2, Briefcase, MapPin, TrendingUp, AlertCircle, Sparkles, Target, Info } from 'lucide-react';
+import { Loader2, Briefcase, MapPin, TrendingUp, AlertCircle, Sparkles, Target, Info, BookOpen, Map, ArrowRight, CheckCircle } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import { useApp } from '../context/AppContext';
 import api, { endpoints } from '../services/api';
@@ -24,6 +24,23 @@ export default function Dashboard() {
     const [simSkill, setSimSkill] = useState("");
     const [simResult, setSimResult] = useState(null);
     const [simLoading, setSimLoading] = useState(false);
+
+    // GenAI State
+    // Roadmap
+    const [roadmap, setRoadmap] = useState(null);
+    const [loadingRoadmap, setLoadingRoadmap] = useState(false);
+    const [roadmapApiKey, setRoadmapApiKey] = useState("");
+
+
+
+    // Pivots
+    const [pivots, setPivots] = useState(null);
+    const [loadingPivots, setLoadingPivots] = useState(false);
+    const [pivotsApiKey, setPivotsApiKey] = useState("");
+
+    // Resume Modal
+    const [showResume, setShowResume] = useState(false);
+
 
     useEffect(() => {
         if (!jobSearch?.taskId) {
@@ -49,6 +66,12 @@ export default function Dashboard() {
                             api.get(endpoints.getAnalytics(jobSearch.taskId)).catch(() => null)
                         ]);
 
+                        // Persist or recover query (Role)
+                        if (!jobSearch.query && results.query) {
+                            // Force update context to persist for session
+                            setJobSearch(prev => ({ ...prev, query: results.query }));
+                        }
+
                         setJobs(results.jobs || []);
                         setAnalytics(analyticsRes);
                     } catch (e) {
@@ -61,12 +84,21 @@ export default function Dashboard() {
                     setError("Search failed. Please try again.");
                     setLoading(false);
                 } else {
-                    // Update status message from logs if available
+                    // Filter logs for the display status
                     if (res.logs && res.logs.length > 0) {
-                        setStatus(res.logs[res.logs.length - 1]);
+                        const scanLogs = [...res.logs].reverse();
+                        const jobLog = scanLogs.find(l => l.includes(' @ ') && (l.includes('(') || l.includes('Scraping')));
+
+                        if (jobLog) {
+                            // Remove (1/10) patterns
+                            const cleaner = jobLog.replace(/\(\d+\/\d+\)/, '').trim();
+                            setStatus(cleaner);
+                        } else {
+                            setStatus("Scanning market portals...");
+                        }
                         setLogs(res.logs);
                     } else {
-                        setStatus("Scraping in progress...");
+                        setStatus("Connecting to scrapers...");
                     }
                 }
             } catch (err) {
@@ -80,6 +112,9 @@ export default function Dashboard() {
                             api.get(endpoints.getAnalytics(jobSearch.taskId)).catch(() => null)
                         ]);
                         if (results?.jobs) {
+                            if (!jobSearch.query && results.query) {
+                                setJobSearch(prev => ({ ...prev, query: results.query }));
+                            }
                             setJobs(results.jobs);
                             setAnalytics(analyticsRes);
                             setLoading(false);
@@ -120,7 +155,7 @@ export default function Dashboard() {
         const hasSkill = profile?.confirmed_skills?.some(s => s.toLowerCase() === skill.name.toLowerCase());
         return {
             ...skill,
-            percentage: ((skill.count / jobs.length) * 100).toFixed(1),
+            percentage: jobs.length > 0 ? ((skill.count / jobs.length) * 100).toFixed(1) : "0.0",
             fill: hasSkill ? '#10B981' : '#F87171' // Emerald Green vs Coral Red
         };
     });
@@ -136,29 +171,10 @@ export default function Dashboard() {
                     <h2 className="text-2xl font-bold text-slate-800 mb-2">Finding Your Perfect Matches</h2>
                     <p className="text-slate-500 animate-pulse">{status}</p>
 
+                    {/* Simple Progress Indicator */}
                     <div className="mt-8 w-64 h-2 bg-slate-200 rounded-full overflow-hidden mb-8">
                         <div className="h-full bg-indigo-600 animate-progress"></div>
                     </div>
-
-                    {/* Real-time Logs Terminal */}
-                    {logs.length > 0 && (
-                        <div className="w-full max-w-2xl bg-slate-900 rounded-xl p-4 shadow-2xl border border-slate-800 font-mono text-xs">
-                            <div className="flex items-center gap-2 mb-3 border-b border-slate-800 pb-2">
-                                <div className="h-2.5 w-2.5 rounded-full bg-red-500"></div>
-                                <div className="h-2.5 w-2.5 rounded-full bg-yellow-500"></div>
-                                <div className="h-2.5 w-2.5 rounded-full bg-green-500"></div>
-                                <span className="text-slate-500 ml-2 text-[10px] uppercase tracking-wider">Live Scraper Logs</span>
-                            </div>
-                            <div className="h-48 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-slate-700 pr-2 flex flex-col-reverse">
-                                {logs.map((log, i) => (
-                                    <div key={i} className="text-slate-300 break-all leading-relaxed">
-                                        <span className="text-indigo-500 mr-2 font-bold">›</span>
-                                        {log}
-                                    </div>
-                                )).reverse()}
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
         );
@@ -184,10 +200,71 @@ export default function Dashboard() {
 
             <main className="max-w-7xl mx-auto px-4 py-8">
 
-                <header className="mb-8 animate-fade-in-up">
-                    <h1 className="text-3xl font-display font-bold text-slate-900">Market Intelligence</h1>
-                    <p className="text-slate-500">Analysis based on {jobs.length} jobs retrieved.</p>
+                <header className="mb-8 animate-fade-in-up flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h1 className="text-3xl font-display font-bold text-slate-900 mb-1">Market Intelligence</h1>
+                        <p className="text-slate-500 flex items-center gap-2">
+                            Analysis for <span className="font-bold text-slate-700">{jobSearch?.query || "Target Role"}</span>
+                            <span className="w-1 h-1 bg-slate-400 rounded-full"></span>
+                            Based on {jobs.length >= 50 ? '50+' : jobs.length} jobs retrieved.
+                        </p>
+                    </div>
+                    {profile && (
+                        <button
+                            onClick={() => setShowResume(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:text-indigo-600 hover:border-indigo-200 transition-all shadow-sm"
+                        >
+                            <BookOpen className="h-4 w-4" />
+                            View Resume
+                        </button>
+                    )}
                 </header>
+
+                {/* Resume Modal */}
+                {showResume && profile && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setShowResume(false)}>
+                        <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col animate-scale-up" onClick={e => e.stopPropagation()}>
+                            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                    <BookOpen className="h-5 w-5 text-indigo-600" />
+                                    Resume Preview
+                                </h3>
+                                <div className="flex items-center gap-2">
+                                    {(profile.resume_path || profile.resume_url) && (
+                                        <a
+                                            href={`http://localhost:8000${profile.resume_path || profile.resume_url}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 px-3 py-1 bg-indigo-50 rounded-lg border border-indigo-100 transition-all"
+                                        >
+                                            Open in New Tab
+                                        </a>
+                                    )}
+                                    <button onClick={() => setShowResume(false)} className="p-2 hover:bg-slate-200 rounded-full transition-colors">
+                                        <span className="sr-only">Close</span>
+                                        <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="flex-1 overflow-hidden bg-slate-100">
+                                {profile.resume_path || profile.resume_url ? (
+                                    <embed
+                                        src={`http://localhost:8000${profile.resume_path || profile.resume_url}`}
+                                        type="application/pdf"
+                                        className="w-full h-full border-none"
+                                    />
+                                ) : (
+                                    <div className="p-8 overflow-y-auto h-full bg-white font-serif text-sm leading-relaxed text-slate-800 whitespace-pre-wrap">
+                                        {profile.raw_text}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                                <button onClick={() => setShowResume(false)} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-medium hover:bg-slate-800">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Dashboard Grid */}
                 <div className="grid lg:grid-cols-3 gap-6 mb-8 animate-fade-in-up delay-100">
@@ -211,8 +288,20 @@ export default function Dashboard() {
                                 <span className="text-xs text-slate-500">out of 100</span>
                             </div>
                         </div>
-                        <p className="mt-4 text-slate-600 px-4 text-sm">
-                            You match strongly with top tier jobs in the market. Keep improving!
+                        <p className="mt-4 text-slate-600 px-4 text-sm font-medium">
+                            {(() => {
+                                const s = Math.round(analytics?.avg_match_score || 0);
+                                if (s >= 90) return "Exceptional fit! You're ready for top-tier roles.";
+                                if (s >= 80) return "Excellent profile. Very strong market alignment.";
+                                if (s >= 70) return "Great match. You qualify for most positions.";
+                                if (s >= 60) return "Good foundation. A few skills will boost you up.";
+                                if (s >= 50) return "Solid start. Targeted upskilling recommended.";
+                                if (s >= 40) return "Fair match. Focus on core requirements.";
+                                if (s >= 30) return "Early stage. Build your portfolio projects.";
+                                if (s >= 20) return "Learning curve ahead. Don't give up!";
+                                if (s >= 10) return "Just starting. Every expert was once a beginner.";
+                                return "New journey. Let's build your skills from scratch.";
+                            })()}
                         </p>
                     </div>
 
@@ -382,6 +471,214 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                {/* GenAI Section: Growth Engine & Pivots */}
+                <div className="grid lg:grid-cols-2 gap-6 mb-12 animate-fade-in-up delay-200">
+
+                    {/* 1. Growth Engine (Roadmap) */}
+                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                                <Map className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900">Personalized Growth Engine</h3>
+                                <p className="text-sm text-slate-500">Your AI-generated path to {analytics?.top_skills?.[0]?.name || 'Target Role'} mastery.</p>
+                            </div>
+                        </div>
+
+                        {!roadmap ? (
+                            <div className="text-center py-6">
+                                <p className="text-slate-600 mb-4 max-w-sm mx-auto text-sm">
+                                    Generate a 3-month accelerated learning plan based on your skill gaps.
+                                </p>
+
+                                {/* Embedded Config */}
+                                <div className="mb-4 max-w-xs mx-auto bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <p className="text-xs text-slate-500">Enter your Groq API Key</p>
+                                        <a href="https://www.youtube.com/watch?v=nt1PJu47nTk" target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-600 hover:text-indigo-800 underline">Get Key</a>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={roadmapApiKey}
+                                        onChange={(e) => setRoadmapApiKey(e.target.value)}
+                                        placeholder="gsk_..."
+                                        className="w-full px-2 py-1.5 text-xs bg-white border border-slate-300 rounded focus:outline-none focus:border-indigo-500 text-center"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={async () => {
+                                        if (!roadmapApiKey) return alert("Please enter an API Key to generate roadmap.");
+
+                                        setLoadingRoadmap(true);
+                                        try {
+                                            const missing = (analytics?.top_skills || [])
+                                                .filter(s => !profile?.confirmed_skills?.some(cs => cs.toLowerCase() === s.name.toLowerCase()))
+                                                .slice(0, 5) // Top 5 missing skills
+                                                .map(s => s.name);
+
+                                            if (missing.length === 0) {
+                                                alert("You have all top skills! Great job.");
+                                                setLoadingRoadmap(false);
+                                                return;
+                                            }
+
+                                            const res = await api.post(endpoints.generateRoadmap, {
+                                                api_key: roadmapApiKey,
+                                                provider: "groq",
+                                                current_role: "Aspiring Candidate", // Could be from profile
+                                                target_role: "Target Role", // Could be dynamic
+                                                missing_skills: missing
+                                            });
+                                            setRoadmap(res);
+                                        } catch (e) {
+                                            alert("Roadmap Error: " + (e.response?.data?.detail || e.message));
+                                        } finally {
+                                            setLoadingRoadmap(false);
+                                        }
+                                    }}
+                                    disabled={loadingRoadmap}
+                                    className="px-6 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-70 text-sm"
+                                >
+                                    {loadingRoadmap ? (
+                                        <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Building Plan...</span>
+                                    ) : (
+                                        <span className="flex items-center gap-2"><Sparkles className="h-4 w-4" /> Generate 3-Month Roadmap</span>
+                                    )}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-6 animate-fade-in">
+                                <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-slate-200">
+                                    {roadmap.monthly_plan.map((month, i) => (
+                                        <div key={i} className="min-w-[200px] flex-1 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                            <div className="text-xs font-bold text-indigo-500 uppercase tracking-widest mb-1">Month {month.month}</div>
+                                            <h4 className="font-bold text-slate-800 mb-2">{month.focus_topic}</h4>
+                                            <div className="flex flex-wrap gap-1 mb-3">
+                                                {month.skills_to_learn.slice(0, 3).map(s => (
+                                                    <span key={s} className="text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-600">{s}</span>
+                                                ))}
+                                            </div>
+                                            <p className="text-xs text-slate-500 line-clamp-2 italic">"{month.project_idea}"</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+
+                                <div>
+                                    <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                                        <Target className="h-4 w-4 text-emerald-500" />
+                                        Portfolio Killer Projects
+                                    </h4>
+                                    <div className="space-y-3">
+                                        {roadmap.portfolio_projects.map((proj, i) => (
+                                            <div key={i} className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl">
+                                                <h5 className="font-bold text-slate-800 text-sm mb-1">{proj.title}</h5>
+                                                <p className="text-xs text-slate-600 mb-2">{proj.description}</p>
+                                                <div className="flex items-start gap-1.5">
+                                                    <div className="mt-0.5"><CheckCircle className="h-3 w-3 text-emerald-600" /></div>
+                                                    <p className="text-[10px] text-emerald-700 font-medium">Recruiter Hook: {proj.recruiter_hook}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* 2. The Pivoter (Safety Net) */}
+                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
+                                <ArrowRight className="h-6 w-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-slate-900">Career Safety Net</h3>
+                                <p className="text-sm text-slate-500">Explore adjacent roles you can pivot to with minimal effort.</p>
+                            </div>
+                        </div>
+
+                        {!pivots ? (
+                            <div className="text-center py-6">
+                                <p className="text-slate-600 mb-4 max-w-sm mx-auto text-sm">
+                                    Find 3 roles with &gt;70% skill overlap to your current profile.
+                                </p>
+
+                                {/* Embedded Config */}
+                                <div className="mb-4 max-w-xs mx-auto bg-slate-50 p-3 rounded-lg border border-slate-200">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <p className="text-xs text-slate-500">Enter your Groq API Key</p>
+                                        <a href="https://www.youtube.com/watch?v=nt1PJu47nTk" target="_blank" rel="noopener noreferrer" className="text-[10px] text-purple-600 hover:text-purple-800 underline">Get Key</a>
+                                    </div>
+                                    <input
+                                        type="password"
+                                        value={pivotsApiKey}
+                                        onChange={(e) => setPivotsApiKey(e.target.value)}
+                                        placeholder="gsk_..."
+                                        className="w-full px-2 py-1.5 text-xs bg-white border border-slate-300 rounded focus:outline-none focus:border-purple-500 text-center"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={async () => {
+                                        if (!pivotsApiKey) return alert("Please enter an API Key to explore pivots.");
+
+                                        setLoadingPivots(true);
+                                        try {
+                                            const res = await api.post(endpoints.suggestPivot, {
+                                                api_key: pivotsApiKey,
+                                                provider: "groq",
+                                                current_role: "Current Profile",
+                                                current_skills: profile?.confirmed_skills || []
+                                            });
+                                            setPivots(res.pivots);
+                                        } catch (e) {
+                                            alert("Pivot Error: " + (e.response?.data?.detail || e.message));
+                                        } finally {
+                                            setLoadingPivots(false);
+                                        }
+                                    }}
+                                    disabled={loadingPivots}
+                                    className="px-6 py-2 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition-all shadow-lg shadow-purple-200 disabled:opacity-70 text-sm"
+                                >
+                                    {loadingPivots ? (
+                                        <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Analyzing Overlaps...</span>
+                                    ) : (
+                                        <span className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> Explore Pivots</span>
+                                    )}
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 animate-fade-in">
+                                {pivots.map((pivot, i) => (
+                                    <div key={i} className="p-4 bg-white border border-slate-200 rounded-xl hover:border-purple-200 transition-colors shadow-sm">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <h4 className="font-bold text-slate-900">{pivot.role}</h4>
+                                            <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
+                                                {pivot.overlap_percentage}% Overlap
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2 mb-2 text-xs text-slate-500">
+                                            <Briefcase className="h-3 w-3" />
+                                            <span>{pivot.salary_potential}</span>
+                                        </div>
+                                        <div className="bg-purple-50 p-2 rounded-lg">
+                                            <span className="text-[10px] uppercase font-bold text-purple-400 block mb-1">Bridge Skills Needed</span>
+                                            <div className="flex flex-wrap gap-1">
+                                                {pivot.bridge_skills.map(s => (
+                                                    <span key={s} className="text-xs font-medium text-purple-700 bg-white px-2 py-0.5 rounded border border-purple-100">{s}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div >
+
                 {/* Job List */}
                 {/* CTA to Jobs Page */}
                 <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 flex flex-col items-center justify-center text-center animate-fade-in-up delay-200 col-span-full">
@@ -402,7 +699,7 @@ export default function Dashboard() {
                 {/* Modals */}
                 {/* Simulator Modal is now embedded */}
 
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }

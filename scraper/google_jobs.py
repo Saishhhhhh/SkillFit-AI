@@ -99,6 +99,8 @@ def scrape_google_jobs(keyword, location, limit=10, filename="google_jobs.json")
                 print("    ⚠ No next page available.")
                 break
                 
+            import time
+            time.sleep(2) # Avoid rate limits
             current_url = next_url
             current_params = {"api_key": API_KEY} 
             page_num += 1

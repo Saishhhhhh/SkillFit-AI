@@ -66,6 +66,7 @@ def init_db():
             extracted_skills TEXT DEFAULT '[]',
             confirmed_skills TEXT DEFAULT '[]',
             experience TEXT DEFAULT '[]',
+            resume_path TEXT,
             global_vector BLOB,
             skill_vector BLOB,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -128,6 +129,12 @@ def init_db():
         )
     """)
 
+    # Migrations
+    try:
+        cursor.execute("ALTER TABLE profiles ADD COLUMN resume_path TEXT")
+    except sqlite3.OperationalError:
+        pass # Column already exists
+    
     conn.commit()
     conn.close()
 

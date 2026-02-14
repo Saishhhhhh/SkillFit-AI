@@ -173,6 +173,9 @@ def run_scraper_engine(
     task_registry[task_id]["status"] = "completed"
     
     final_output = {
+        "task_id": task_id,
+        "query": query,
+        "location": location,
         "jobs": aggregated_results,
         **scoring_metadata,
     }

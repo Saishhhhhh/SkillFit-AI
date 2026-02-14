@@ -20,14 +20,15 @@ def save_profile(
     extracted_skills: List[str],
     experience: List[str],
     filename: str = "",
+    resume_path: str = "",
 ) -> str:
     """Save a new user profile after resume upload. Returns profile_id."""
     profile_id = str(uuid.uuid4())
     conn = get_connection()
     conn.execute(
-        """INSERT INTO profiles (id, filename, raw_text, extracted_skills, experience)
-           VALUES (?, ?, ?, ?, ?)""",
-        (profile_id, filename, raw_text, json.dumps(extracted_skills), json.dumps(experience)),
+        """INSERT INTO profiles (id, filename, raw_text, extracted_skills, experience, resume_path)
+           VALUES (?, ?, ?, ?, ?, ?)""",
+        (profile_id, filename, raw_text, json.dumps(extracted_skills), json.dumps(experience), resume_path),
     )
     conn.commit()
     conn.close()

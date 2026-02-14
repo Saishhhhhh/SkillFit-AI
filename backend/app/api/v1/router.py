@@ -19,3 +19,7 @@ api_router.include_router(vectors.router, prefix="/vectors", tags=["Vector Opera
 
 # History
 api_router.include_router(history.router, prefix="/history", tags=["History"])
+
+# GenAI
+from backend.app.api.v1.endpoints import genai
+api_router.include_router(genai.router, prefix="/genai", tags=["GenAI"])

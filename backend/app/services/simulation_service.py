@@ -88,8 +88,8 @@ def simulate_skill_impact(
         total_old_score += old_score
         total_new_score += new_score
         
-        if old_score >= 70: old_high_match += 1
-        if new_score >= 70: new_high_match += 1
+        if old_score >= 60: old_high_match += 1
+        if new_score >= 60: new_high_match += 1
         
         if new_score > old_score:
             improved_jobs.append({
