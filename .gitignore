@@ -1,9 +1,11 @@
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -16,77 +18,64 @@ parts/
 sdist/
 var/
 wheels/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
+.pytest_cache/
+.mypy_cache/
 
 # Virtual Environment
-.env
-.venv
-env/
 venv/
-ENV/
-env.bak/
-venv.bak/
+.venv/
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# PyInstaller
+*.spec
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-
-# Node.js / Electron / React
+# NodeJS / Frontend
 node_modules/
-dist/
-out/
-build/
-.next/
-coverage/
-.nyc_output/
+frontend/node_modules/
+frontend/dist/
+frontend/release/
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# VS Code
-.vscode/
-*.code-workspace
+# Database & Data
+*.db
+*.sqlite3
+backend/app/db/*.db
+data/skillfit.db
+data/*.db
+!data/tech_aliases.json  # DO NOT IGNORE: We need this for the app to work
 
-# Mac OS
-.DS_Store
+# User Uploads
+uploads/
+backend/uploads/
 
-# Project Specific (Scraper Results)
+# Scraper Results
+scraper/results/
 *_results.json
-*_linkedin.json
-*_indeed.json
-*_glassdoor.json
-*_naukri.json
-*_google.json
-*_jobs.json
-scraper/*.json
-backend/app/*.json
 
 # Environment Variables
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*.local
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific
+.DS_Store
+Thumbs.db
 
 # Logs
-logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+logs/
