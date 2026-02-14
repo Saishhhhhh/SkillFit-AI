@@ -23,6 +23,14 @@ async def search_jobs(request: SearchRequest, background_tasks: BackgroundTasks)
             "global_vector": request.user_vectors.global_vector,
             "skill_vector": request.user_vectors.skill_vector,
         }
+    elif request.profile_id:
+        from backend.app.db.crud import get_profile
+        profile = get_profile(request.profile_id)
+        if profile and profile.get("global_vector") and profile.get("skill_vector"):
+            user_vectors_dict = {
+                "global_vector": profile["global_vector"],
+                "skill_vector": profile["skill_vector"],
+            }
 
     background_tasks.add_task(
         run_scraper_engine,
@@ -32,6 +40,7 @@ async def search_jobs(request: SearchRequest, background_tasks: BackgroundTasks)
         request.portals,
         request.serp_api_config,
         user_vectors_dict,
+        request.profile_id,  # Pass profile_id for history association
     )
 
     return {"task_id": task_id, "status": "processing"}
@@ -40,7 +49,16 @@ async def search_jobs(request: SearchRequest, background_tasks: BackgroundTasks)
 @router.get("/status/{task_id}", tags=["Jobs"], summary="Check Task Status")
 async def get_task_status(task_id: str):
     task = task_registry.get(task_id)
+    
     if not task:
+        # Check if results file already exists (History support after restart)
+        scraper_result_file = os.path.join(
+            os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../scraper/results")),
+            f"{task_id}_final_results.json"
+        )
+        if os.path.exists(scraper_result_file):
+            return {"task_id": task_id, "status": "completed", "logs": ["Restored from history"]}
+            
         raise HTTPException(status_code=404, detail="Task not found")
 
     return {
@@ -52,12 +70,23 @@ async def get_task_status(task_id: str):
 
 @router.get("/results/{task_id}", tags=["Jobs"], summary="Get Aggregated Results")
 async def get_task_results(task_id: str):
+    # Strategy 1: Load from file (this allows history retrieval even if registry is lost)
+    scraper_result_file = os.path.join(
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../../scraper/results")),
+        f"{task_id}_final_results.json"
+    )
+    if os.path.exists(scraper_result_file):
+        with open(scraper_result_file, "r") as f:
+            data = json.load(f)
+        return data
+
+    # Strategy 2: Check registry for ongoing tasks
     task = task_registry.get(task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=404, detail="Task results not found")
 
     if task.get("status") != "completed":
-        raise HTTPException(status_code=400, detail="Task is not completed yet")
+        raise HTTPException(status_code=400, detail="Task is still in progress")
 
     # Path: endpoints/ → v1/ → api/ → app/ → backend/ → project_root/scraper/results/
     scraper_result_file = os.path.join(
@@ -119,11 +148,11 @@ async def get_analytics(task_id: str):
     except Exception:
         pass
 
-    # Fallback
+    # Strategy 3: Check registry for ongoing status (if strategy 1 & 2 failed)
     if task and task.get("status") != "completed":
-        raise HTTPException(status_code=400, detail="Task is not completed yet")
+        raise HTTPException(status_code=400, detail="Task is still in progress")
 
-    raise HTTPException(status_code=404, detail="No results found for this task")
+    raise HTTPException(status_code=404, detail="No analytics found for this task")
 
 
 @router.post("/simulate/{search_id}", tags=["Jobs"], summary="Run What-If Analysis")

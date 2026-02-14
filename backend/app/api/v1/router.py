@@ -4,7 +4,7 @@ Central API Router for v1.
 
 from fastapi import APIRouter
 
-from backend.app.api.v1.endpoints import profile, jobs, vectors
+from backend.app.api.v1.endpoints import profile, jobs, vectors, history
 
 api_router = APIRouter()
 
@@ -16,3 +16,6 @@ api_router.include_router(jobs.router, prefix="/jobs", tags=["Jobs"])
 
 # Vector Operations (Scoring Calculator)
 api_router.include_router(vectors.router, prefix="/vectors", tags=["Vector Operations"])
+
+# History
+api_router.include_router(history.router, prefix="/history", tags=["History"])

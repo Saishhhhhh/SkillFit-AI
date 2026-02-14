@@ -110,6 +110,30 @@ def get_latest_profile() -> Optional[Dict[str, Any]]:
     return result
 
 
+def get_all_profiles() -> List[Dict[str, Any]]:
+    """Get all user profiles ordered by creation time."""
+    conn = get_connection()
+    rows = conn.execute("SELECT * FROM profiles ORDER BY created_at DESC").fetchall()
+    conn.close()
+
+    results = []
+    for row in rows:
+        r = dict(row)
+        # Remove vectors to avoid serialization error (bytes object)
+        r.pop("global_vector", None)
+        r.pop("skill_vector", None)
+        
+        # Parse JSON fields for frontend use
+        try:
+            r["extracted_skills"] = json.loads(r["extracted_skills"])
+            r["confirmed_skills"] = json.loads(r["confirmed_skills"])
+            r["experience"] = json.loads(r["experience"])
+        except Exception:
+            pass # Handle legacy data gracefully
+        results.append(r)
+    return results
+
+
 # SEARCHES
 
 def save_search(
@@ -151,23 +175,80 @@ def update_search_scores(
     logger.info(f"Search scores updated: {search_id}")
 
 
-def get_search_history(limit: int = 20) -> List[Dict[str, Any]]:
-    """Get recent search history."""
+def get_search_history(limit: int = 50, profile_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Get recent search history, optionally filtered by profile."""
     conn = get_connection()
-    rows = conn.execute(
-        "SELECT * FROM searches ORDER BY created_at DESC LIMIT ?", (limit,)
-    ).fetchall()
+    
+    query = "SELECT * FROM searches"
+    params = []
+    
+    if profile_id:
+        query += " WHERE profile_id = ?"
+        params.append(profile_id)
+        
+    query += " ORDER BY created_at DESC LIMIT ?"
+    params.append(limit)
+    
+    rows = conn.execute(query, tuple(params)).fetchall()
     conn.close()
 
     results = []
     for row in rows:
         r = dict(row)
-        r["portals"] = json.loads(r["portals"])
+        try:
+            r["portals"] = json.loads(r["portals"])
+        except:
+            r["portals"] = []
         results.append(r)
     return results
 
 
-# JOBS
+def delete_search(search_id: str):
+    """Delete a search and all its associated jobs."""
+    conn = get_connection()
+    # Delete jobs first (and vec_jobs via trigger or manual?)
+    # vec_jobs references job_id. It's a virtual table, so we must delete manually if no trigger.
+    # But usually virtual tables don't support foreign keys well.
+    # We should delete from vec_jobs where job_id in (select id from jobs where search_id = ?)
+    
+    # 1. Get job IDs to delete from vec_jobs
+    job_ids = conn.execute("SELECT id FROM jobs WHERE search_id = ?", (search_id,)).fetchall()
+    for row in job_ids:
+        conn.execute("DELETE FROM vec_jobs WHERE job_id = ?", (row[0],))
+        
+    # 2. Delete jobs
+    conn.execute("DELETE FROM jobs WHERE search_id = ?", (search_id,))
+    
+    # 3. Delete search
+    conn.execute("DELETE FROM searches WHERE id = ?", (search_id,))
+    conn.commit()
+    conn.close()
+
+
+def delete_profile(profile_id: str):
+    """Delete a profile and all its associated searches/jobs."""
+    conn = get_connection()
+    
+    # 1. Get searches to delete
+    searches = conn.execute("SELECT id FROM searches WHERE profile_id = ?", (profile_id,)).fetchall()
+    
+    for row in searches:
+        sid = row[0]
+        # Delete jobs for this search
+        job_ids = conn.execute("SELECT id FROM jobs WHERE search_id = ?", (sid,)).fetchall()
+        for jrow in job_ids:
+            conn.execute("DELETE FROM vec_jobs WHERE job_id = ?", (jrow[0],))
+        conn.execute("DELETE FROM jobs WHERE search_id = ?", (sid,))
+        conn.execute("DELETE FROM searches WHERE id = ?", (sid,))
+
+    # 2. Delete from vec_profiles
+    conn.execute("DELETE FROM vec_profiles WHERE profile_id = ?", (profile_id,))
+    
+    # 3. Delete profile
+    conn.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
+    
+    conn.commit()
+    conn.close()
 
 def save_jobs_batch(
     search_id: str,
@@ -191,7 +272,7 @@ def save_jobs_batch(
                 job.get("location", ""),
                 job.get("description", ""),
                 json.dumps(job.get("skills", [])),
-                job.get("url", ""),
+                job.get("link") or job.get("url") or "",
                 job.get("portal", ""),
                 job.get("match_score", 0),
                 json.dumps({k: v for k, v in job.items() if k not in (
@@ -235,6 +316,7 @@ def get_jobs_by_search(search_id: str) -> List[Dict[str, Any]]:
         r = dict(row)
         r["skills"] = json.loads(r["skills"])
         r["metadata"] = json.loads(r["metadata"])
+        r["link"] = r.get("url") # Standardize for frontend
         results.append(r)
     return results
 
@@ -252,6 +334,7 @@ def get_all_jobs(limit: int = 100) -> List[Dict[str, Any]]:
         r = dict(row)
         r["skills"] = json.loads(r["skills"])
         r["metadata"] = json.loads(r["metadata"])
+        r["link"] = r.get("url") # Standardize for frontend
         results.append(r)
     return results
 

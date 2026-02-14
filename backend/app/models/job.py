@@ -22,6 +22,7 @@ class SearchRequest(BaseModel):
     portals: List[str] = Field(..., description="List of portals: ['linkedin', 'indeed', 'glassdoor', 'naukri', 'google']")
     serp_api_config: Optional[SerpApiConfig] = Field(None, description="Configuration for Google Jobs (SerpAPI)")
     user_vectors: Optional[UserVectors] = Field(None, description="Pre-computed user vectors from /embed endpoint")
+    profile_id: Optional[str] = Field(None, description="Profile ID to fetch vectors from DB")
 
 class Job(BaseModel):
     title: str

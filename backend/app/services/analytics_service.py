@@ -270,9 +270,28 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
         portal = job.get("portal", "unknown")
         portal_counter[portal] += 1
 
+    # ─── Statistics ───
+    total_score = sum(job.get("match_score", 0) for job in jobs)
+    avg_match_score = round(total_score / len(jobs), 1) if jobs else 0
+
+    # ─── Work Mode Aggregation ───
+    work_mode_counter = Counter()
+    for job in jobs:
+        text = (job.get("location", "") + " " + job.get("title", "") + " " + job.get("description", "")[:500]).lower()
+        if "remote" in text:
+            work_mode_counter["Remote"] += 1
+        elif "hybrid" in text:
+            work_mode_counter["Hybrid"] += 1
+        else:
+            work_mode_counter["On-site"] += 1
+
     # ─── Build Response ───
     return {
         "total_jobs": len(jobs),
+        "avg_match_score": avg_match_score,
+        "work_mode_distribution": [
+            {"name": k, "count": v} for k, v in work_mode_counter.items() if v > 0
+        ],
         "top_skills": [
             {"name": name, "count": count}
             for name, count in skill_counter.most_common(20)

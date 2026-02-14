@@ -6,6 +6,7 @@ import uuid
 from typing import List, Dict, Optional, Any
 import time
 import logging
+import threading
 from backend.app.services.job_service import enrich_job_listings
 
 logger = logging.getLogger(__name__)
@@ -20,7 +21,8 @@ def run_scraper_engine(
     location: str, 
     portals: List[str], 
     serp_api_config: Optional[Any] = None,
-    user_vectors: Optional[Dict[str, List[float]]] = None
+    user_vectors: Optional[Dict[str, List[float]]] = None,
+    profile_id: Optional[str] = None
 ):
 
     task_registry[task_id] = {"status": "processing", "results": [], "logs": []}
@@ -31,6 +33,14 @@ def run_scraper_engine(
     
     processes = []
     temp_files = {}
+
+    def stream_logs(pipe, logs_list):
+        """Read lines from a pipe and append to logs list."""
+        for line in iter(pipe.readline, b''):
+            decoded = line.decode('utf-8', errors='replace').strip()
+            if decoded:
+                logs_list.append(decoded)
+        pipe.close()
 
     for portal in portals:
         portal_map = {
@@ -68,6 +78,9 @@ def run_scraper_engine(
         cmd = ["python", script_path, query, location, limit, relative_output_path]
         
         env = os.environ.copy()
+        # Ensure outputs are flushed immediately and encoding is UTF-8 for Windows
+        env["PYTHONUNBUFFERED"] = "1"
+        env["PYTHONIOENCODING"] = "utf-8"
         
         if portal == "google" and serp_api_config:
              api_key = None
@@ -80,8 +93,21 @@ def run_scraper_engine(
                 env["SERP_API_KEY"] = api_key
 
         try:
-            p = subprocess.Popen(cmd, env=env, cwd=SCRAPER_DIR) 
+            # Redirect stdout/stderr to PIPE
+            p = subprocess.Popen(
+                cmd, 
+                env=env, 
+                cwd=SCRAPER_DIR, 
+                stdout=subprocess.PIPE, 
+                stderr=subprocess.STDOUT
+            )
             processes.append((portal, p))
+            
+            # Start a daemon thread to read output
+            t = threading.Thread(target=stream_logs, args=(p.stdout, task_registry[task_id]["logs"]))
+            t.daemon = True
+            t.start()
+            
         except Exception as e:
              task_registry[task_id]["logs"].append(f"Failed to start {portal}: {str(e)}")
 
@@ -89,7 +115,7 @@ def run_scraper_engine(
     for portal, p in processes:
         p.wait()
         if p.returncode != 0:
-             task_registry[task_id]["logs"].append(f"{portal} failed with return code {p.returncode}")
+             task_registry[task_id]["logs"].append(f"{portal} finished with return code {p.returncode}")
 
     # Aggregate results from all scrapers
     aggregated_results = []
@@ -99,6 +125,8 @@ def run_scraper_engine(
             try:
                 with open(output_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
+                    count = len(data)
+                    task_registry[task_id]["logs"].append(f"Loaded {count} jobs from {portal}")
                     for job in data:
                         job["portal"] = portal
                     aggregated_results.extend(data)
@@ -163,7 +191,7 @@ def run_scraper_engine(
 
         save_search(
             search_id=task_id,
-            profile_id=None,  # TODO: 
+            profile_id=profile_id,
             query=query,
             location=location,
             portals=portals,
