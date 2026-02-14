@@ -1,5 +1,5 @@
 """
-Vector Scoring Service — Orchestrates embedding generation and match scoring.
+Vector Scoring Service — embedding generation and match scoring.
 
 Responsibilities:
 1. Generate user profile vectors (global + skill) — called by /embed endpoint.
@@ -32,13 +32,11 @@ def cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
 
 
 def generate_user_vectors(resume_text: str, confirmed_skills: List[str]) -> Dict[str, List[float]]:
-    """
-    Generate the two user vectors:
-    - global_vector: From the full resume text.
-    - skill_vector:  From the comma-separated confirmed skill list.
-
-    Called by the /embed endpoint AFTER user confirms skills.
-    """
+    # Create skill string (Standardize first to be safe)
+    from ml.utils.skill_standardizer import standardizer
+    if standardizer and confirmed_skills:
+        confirmed_skills = standardizer.standardize(confirmed_skills)
+        
     skill_string = ", ".join(confirmed_skills) if confirmed_skills else ""
 
     logger.info(f"Generating user vectors ({len(confirmed_skills)} confirmed skills)...")
@@ -59,17 +57,26 @@ def generate_job_vectors_batch(jobs: List[Dict[str, Any]]) -> List[Dict[str, Any
     if not jobs:
         return jobs
 
+    from ml.utils.skill_standardizer import standardizer
+
     jd_texts = [job.get("description", "") for job in jobs]
-    jd_skills = [
-        ", ".join(job.get("skills", [])) if isinstance(job.get("skills"), list) else ""
-        for job in jobs
-    ]
+    jd_skills_list = []
+
+    for job in jobs:
+        sk = job.get("skills", [])
+        if isinstance(sk, list):
+            # Standardize if not already done
+            if standardizer:
+                sk = standardizer.standardize(sk)
+            jd_skills_list.append(", ".join(sk))
+        else:
+            jd_skills_list.append("")
 
     logger.info(f"Batch-encoding {len(jobs)} job descriptions...")
     global_vectors = vector_engine.encode_batch(jd_texts)
 
     logger.info(f"Batch-encoding {len(jobs)} job skill strings...")
-    skill_vectors = vector_engine.encode_batch(jd_skills)
+    skill_vectors = vector_engine.encode_batch(jd_skills_list)
 
     for i, job in enumerate(jobs):
         job["jd_global_vector"] = global_vectors[i]
@@ -104,30 +111,9 @@ def calculate_match_score(
 
 def score_jobs_against_user(
     user_vectors: Dict[str, List[float]],
-    jobs: List[Dict[str, Any]]
+    jobs: List[Dict[str, Any]],
+    keep_vectors: bool = False
 ) -> Dict[str, Any]:
-    """
-    Full scoring pipeline using PRE-COMPUTED user vectors.
-    Called by scraper_engine after enrichment.
-
-    1. Batch-generate job vectors.
-    2. Score each job against user.
-    3. Sort by score (descending).
-    4. Calculate Market Reach.
-
-    Args:
-        user_vectors: {"global_vector": [...], "skill_vector": [...]}
-        jobs: List of enriched job dicts.
-
-    Returns:
-        {
-            "jobs": [...sorted with match_score and without raw vectors...],
-            "market_reach": 45.0,
-            "average_score": 62.3,
-            "total_jobs": 50,
-            "high_match_jobs": 12,
-        }
-    """
     # 1. Batch-encode all job vectors
     jobs = generate_job_vectors_batch(jobs)
 
@@ -135,10 +121,11 @@ def score_jobs_against_user(
     for job in jobs:
         job["match_score"] = calculate_match_score(user_vectors, job)
 
-    # 3. Remove raw vectors from output (they're huge, not needed by frontend)
-    for job in jobs:
-        job.pop("jd_global_vector", None)
-        job.pop("jd_skill_vector", None)
+    # 3. Remove raw vectors from output (unless requested)
+    if not keep_vectors:
+        for job in jobs:
+            job.pop("jd_global_vector", None)
+            job.pop("jd_skill_vector", None)
 
     # 4. Sort (highest match first)
     jobs.sort(key=lambda j: j["match_score"], reverse=True)

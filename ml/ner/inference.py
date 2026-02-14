@@ -62,7 +62,6 @@ class TwoLayerExtractor:
         # Add the 'EntityRuler' pipe (fast dictionary matcher)
         ruler = self.nlp.add_pipe("entity_ruler", before="ner", config={"overwrite_ents": False})
         
-        # Convert ["Python", "Java"] -> patterns SpaCy understands
         patterns = [
             {"label": "SKILL", "pattern": [{"LOWER": w.lower()} for w in term.split()]}
             for term in skill_terms
@@ -70,7 +69,7 @@ class TwoLayerExtractor:
         ruler.add_patterns(patterns)
 
     def extract_skills(self, text: str) -> Dict[str, Any]:
-        """Main entry point: Extracts skills and experience."""
+        #Loading Model
         self.load_model()
         
         return {
@@ -79,7 +78,6 @@ class TwoLayerExtractor:
         }
 
     def _run_pipeline(self, text: str) -> List[str]:
-        """Runs the hybrid AI + Dictionary pipeline."""
         if not self.nlp: return []
 
         try:
@@ -99,7 +97,7 @@ class TwoLayerExtractor:
             return []
 
     def _find_experience(self, text: str) -> Dict[str, Any]:
-        """Finds 'X years of experience' using Regex."""
+        #Not Using Anymore
         import re
         patterns = [
             r'(\d+)\+?\s*(?:years?|yrs?)(?:\s+of)?\s+(?:experience|exp)',
@@ -121,5 +119,5 @@ class TwoLayerExtractor:
         return {"total_years": None, "summary": "Not detected"}
 
 
-# Singleton instance
+# Main Call
 resume_parser = TwoLayerExtractor()

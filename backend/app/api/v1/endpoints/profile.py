@@ -4,6 +4,7 @@ import logging
 from backend.app.services.resume_service import process_resume
 from backend.app.services.vector_service import generate_user_vectors
 from backend.app.models.job import UserProfile
+from backend.app.db.crud import save_profile, update_profile_vectors, get_profile
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,8 @@ router = APIRouter()
     2. Run **2-layer skill extraction**:
        - Layer 1: ML-based NER (amjad-awad/skill-extractor)
        - Layer 2: Dictionary matching (1000+ tech terms)
-    3. Return a UI-ready JSON with extracted skills.
+    3. Save profile to local database.
+    4. Return a UI-ready JSON with extracted skills and profile_id.
     """,
 )
 async def upload_resume(file: UploadFile = File(...)):
@@ -46,7 +48,19 @@ async def upload_resume(file: UploadFile = File(...)):
 
     try:
         result = process_resume(contents, file.filename)
+
+        # Save to database
+        skill_names = [s["name"] for s in result.get("skills", [])]
+        profile_id = save_profile(
+            raw_text=result["raw_text"],
+            extracted_skills=skill_names,
+            experience=result.get("experience", []),
+            filename=file.filename,
+        )
+
+        result["profile_id"] = profile_id
         return result
+
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
     except Exception as e:
@@ -63,6 +77,8 @@ async def upload_resume(file: UploadFile = File(...)):
     Call this **after** the user has reviewed and confirmed their skills.
     Returns global_vector (from resume text) and skill_vector (from confirmed skills).
     These vectors are reusable across multiple job searches.
+    
+    If profile_id is provided, vectors are saved to the database for caching.
     """,
 )
 async def embed_user_profile(profile: UserProfile):
@@ -71,15 +87,40 @@ async def embed_user_profile(profile: UserProfile):
             profile.raw_text,
             profile.confirmed_skills
         )
+
+        # Save vectors to DB if profile_id is provided
+        if profile.profile_id:
+            update_profile_vectors(
+                profile_id=profile.profile_id,
+                confirmed_skills=profile.confirmed_skills,
+                global_vector=user_vectors["global_vector"],
+                skill_vector=user_vectors["skill_vector"],
+            )
+
         return {
+            "profile_id": profile.profile_id,
             "global_vector": user_vectors["global_vector"],
             "skill_vector": user_vectors["skill_vector"],
             "skills_used": profile.confirmed_skills,
             "metadata": {
                 "vector_dim": 384,
                 "model": "all-MiniLM-L6-v2",
+                "saved_to_db": bool(profile.profile_id),
             }
         }
     except Exception as e:
         logger.error(f"Embedding generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Embedding generation failed: {str(e)}")
+
+
+@router.get(
+    "/{profile_id}",
+    tags=["Profile"],
+    summary="Get Profile by ID",
+    description="Retrieve a saved profile with its extracted skills and vectors.",
+)
+async def get_profile_by_id(profile_id: str):
+    profile = get_profile(profile_id)
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    return profile

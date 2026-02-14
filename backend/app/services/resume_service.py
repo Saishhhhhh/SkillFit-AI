@@ -47,7 +47,12 @@ def process_resume(file_bytes: bytes, filename: str) -> Dict[str, Any]:
     # Step 2: Run ML inference (skills + experience)
     result = resume_parser.extract_skills(raw_text)
 
-    # Step 3: Build UI-ready response (vectors generated later via /embed)
+    # Step 3: Standardize skills
+    from ml.utils.skill_standardizer import standardizer
+    if standardizer:
+        result["skills"] = standardizer.standardize(result["skills"])
+
+    # Step 4: Build UI-ready response (vectors generated later via /embed)
     return {
         "filename": filename,
         "raw_text": raw_text,
@@ -60,5 +65,6 @@ def process_resume(file_bytes: bytes, filename: str) -> Dict[str, Any]:
             "text_length": len(raw_text),
             "skills_count": len(result["skills"]),
             "model": "amjad-awad/skill-extractor + EntityRuler",
+            "standardized": bool(standardizer),
         }
     }

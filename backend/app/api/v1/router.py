@@ -1,10 +1,5 @@
 """
 Central API Router for v1.
-
-All endpoint routers are registered here.
-To add a new module (e.g., market, insights), just:
-  1. Create `endpoints/market.py` with its own `router = APIRouter()`
-  2. Import and include it below.
 """
 
 from fastapi import APIRouter
@@ -21,8 +16,3 @@ api_router.include_router(jobs.router, prefix="/jobs", tags=["Jobs"])
 
 # Vector Operations (Scoring Calculator)
 api_router.include_router(vectors.router, prefix="/vectors", tags=["Vector Operations"])
-
-# ── Future Phases ──
-# api_router.include_router(market.router, prefix="/market")       # Phase 2
-# api_router.include_router(insights.router, prefix="/insights")   # Phase 4
-# api_router.include_router(comparison.router, prefix="/compare")  # Phase 5

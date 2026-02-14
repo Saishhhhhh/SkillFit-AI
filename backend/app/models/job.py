@@ -7,6 +7,7 @@ class SerpApiConfig(BaseModel):
 
 class UserProfile(BaseModel):
     """User profile data sent after skill confirmation, used for scoring."""
+    profile_id: Optional[str] = Field(None, description="Profile ID from /upload response (for DB persistence)")
     raw_text: str = Field(..., description="Raw resume text extracted during upload")
     confirmed_skills: List[str] = Field(..., description="Skills confirmed/edited by user")
 
@@ -29,3 +30,8 @@ class Job(BaseModel):
     description: str
     url: str
     portal: str
+
+
+class SimulationRequest(BaseModel):
+    profile_id: str
+    added_skills: List[str]

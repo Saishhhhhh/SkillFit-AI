@@ -1,13 +1,14 @@
 fastapi
 uvicorn
+pydantic
 requests
 beautifulsoup4
 playwright
 fake-useragent
-pydantic
 pdfplumber
 python-multipart
 spacy
 huggingface_hub
 sentence-transformers
 numpy
+sqlite-vec

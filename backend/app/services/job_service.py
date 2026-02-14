@@ -22,24 +22,28 @@ def extract_skills_from_job(job: Dict[str, Any]) -> Dict[str, Any]:
     """
     existing_skills = job.get("skills", [])
 
-    # If the scraper already provided skills, trust them
+    # If the scraper already provided skills, trust them but standardize
     if existing_skills:
         job["skills_source"] = "scraper"
-        return job
+    else:
+        # Otherwise, extract from the job description
+        description = job.get("description", "")
+        if not description or description == "N/A":
+            job["skills_source"] = "none"
+            return job
 
-    # Otherwise, extract from the job description
-    description = job.get("description", "")
-    if not description or description == "N/A":
-        job["skills_source"] = "none"
-        return job
+        try:
+            result = resume_parser.extract_skills(description)
+            job["skills"] = result.get("skills", [])
+            job["skills_source"] = "ml_extracted"
+        except Exception as e:
+            logger.warning(f"Skill extraction failed for '{job.get('title', 'Unknown')}': {e}")
+            job["skills_source"] = "error"
 
-    try:
-        result = resume_parser.extract_skills(description)
-        job["skills"] = result.get("skills", [])
-        job["skills_source"] = "ml_extracted"
-    except Exception as e:
-        logger.warning(f"Skill extraction failed for '{job.get('title', 'Unknown')}': {e}")
-        job["skills_source"] = "error"
+    # Standardize skills (Critical for vector matching)
+    from ml.utils.skill_standardizer import standardizer
+    if standardizer and job.get("skills"):
+        job["skills"] = standardizer.standardize(job["skills"])
 
     return job
 

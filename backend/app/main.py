@@ -53,9 +53,12 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
 async def root():
     return {"message": f"{settings.PROJECT_NAME} is running"}
 
+from backend.app.db.database import init_db
+
 # ── Background Cleanup ──
 @app.on_event("startup")
 async def startup_event():
+    init_db()  # Create tables if they don't exist
     asyncio.create_task(periodic_cleanup())
 
 async def periodic_cleanup():

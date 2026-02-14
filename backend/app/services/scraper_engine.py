@@ -111,13 +111,26 @@ def run_scraper_engine(
     # Step 1: Enrich jobs with extracted skills
     aggregated_results = enrich_job_listings(aggregated_results)
 
-    # Step 2: Score jobs against user profile (if vectors provided)
+    # Step 2: Score jobs against user profile 
     scoring_metadata = {}
+    job_vectors = []  # Store vectors for DB
+
     if user_vectors:
         try:
             from backend.app.services.vector_service import score_jobs_against_user
-            scored = score_jobs_against_user(user_vectors, aggregated_results)
+            # Keep vectors for DB extraction
+            scored = score_jobs_against_user(user_vectors, aggregated_results, keep_vectors=True)
             aggregated_results = scored["jobs"]
+            
+            # Extract vectors for DB and remove from object to keep JSON small
+            for job in aggregated_results:
+                g_vec = job.pop("jd_global_vector", None)
+                s_vec = job.pop("jd_skill_vector", None)
+                if g_vec and s_vec:
+                    job_vectors.append({"global_vector": g_vec, "skill_vector": s_vec})
+                else:
+                    job_vectors.append({})
+            
             scoring_metadata = {
                 "market_reach": scored["market_reach"],
                 "average_score": scored["average_score"],
@@ -131,7 +144,6 @@ def run_scraper_engine(
 
     task_registry[task_id]["status"] = "completed"
     
-    # Save final results
     final_output = {
         "jobs": aggregated_results,
         **scoring_metadata,
@@ -144,3 +156,32 @@ def run_scraper_engine(
         json.dump(final_output, f, indent=2)
         
     task_registry[task_id]["results_file"] = final_output_path
+
+    # Save to database
+    try:
+        from backend.app.db.crud import save_search, save_jobs_batch, update_search_scores
+
+        save_search(
+            search_id=task_id,
+            profile_id=None,  # TODO: 
+            query=query,
+            location=location,
+            portals=portals,
+        )
+
+        save_jobs_batch(search_id=task_id, jobs=aggregated_results, job_vectors=job_vectors)
+
+        if scoring_metadata:
+            update_search_scores(
+                search_id=task_id,
+                total_jobs=scoring_metadata.get("total_jobs", len(aggregated_results)),
+                market_reach=scoring_metadata.get("market_reach", 0),
+                average_score=scoring_metadata.get("average_score", 0),
+                high_match_jobs=scoring_metadata.get("high_match_jobs", 0),
+            )
+
+        logger.info(f"Results saved to database for task {task_id}")
+    except Exception as e:
+        logger.error(f"DB save failed (JSON file still available): {e}")
+        task_registry[task_id]["logs"].append(f"DB save error: {str(e)}")
+
