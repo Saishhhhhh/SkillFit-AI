@@ -7,7 +7,17 @@ from typing import Dict, List, Any
 
 logger = logging.getLogger(__name__)
 
-SKILLS_JSON_PATH = os.path.join(os.path.dirname(__file__), "tech_skills.json")
+
+import sys
+
+# Freeze-safe path resolution
+if getattr(sys, 'frozen', False):
+    BASE_DIR = sys._MEIPASS
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+SKILLS_JSON_PATH = os.path.join(BASE_DIR, "ml", "ner", "tech_skills.json") if getattr(sys, 'frozen', False) else os.path.join(os.path.dirname(__file__), "tech_skills.json")
+
 
 
 class TwoLayerExtractor:
