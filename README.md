@@ -31,7 +31,7 @@
 
 **See SkillFit AI in Action!** 
 
-📺 **[Watch Demo Video](#)** *(Add your link here)*
+📺 **[Watch Demo Video](https://youtu.be/6aciuX2t4sM))**
 
 *Experience the power of semantic matching, real-time scraping, and AI-driven career roadmaps.*
 
