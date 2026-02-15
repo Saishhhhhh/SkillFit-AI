@@ -13,14 +13,14 @@ from backend.app.services.cleanup import cleanup_stale_files
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Tag Metadata (for Swagger UI) ──
+# Tag Metadata (for Swagger UI)
 tags_metadata = [
     {"name": "Profile", "description": "Resume upload, parsing, and profile management."},
     {"name": "Jobs", "description": "Job search, scraping, and aggregation."},
     {"name": "Health", "description": "Health check endpoints."},
 ]
 
-# ── App Init ──
+# App Init 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="""
@@ -37,7 +37,6 @@ app = FastAPI(
     ]
 )
 
-# ── CORS ──
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -46,23 +45,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Static Files (Resumes) ──
+# Static Files (Resumes)
 UPLOAD_DIR = os.path.abspath(os.path.join(os.getcwd(), "uploads/resumes"))
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
-# ── Register All Routers ──
+# Register All Routers
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
-# ── Health Check ──
-# ── Health Check ──
+# Health Check 
 @app.get("/api/health", tags=["Health"])
 async def root():
     return {"message": f"{settings.PROJECT_NAME} is running "}
 
 from backend.app.db.database import init_db
 
-# ── Background Cleanup ──
+# Background Cleanup
 @app.on_event("startup")
 async def startup_event():
     init_db()  # Create tables if they don't exist

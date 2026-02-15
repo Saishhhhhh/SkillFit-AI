@@ -7,10 +7,9 @@ from backend.app.db.crud import get_profile
 logger = logging.getLogger(__name__)
 
 def run_deep_dive_comparison(resume_text: str = None, jd_text: str = None, api_key: str = None, profile_id: str = None) -> Dict[str, Any]:
-    """
-    Perform a high-precision comparison.
-    Supports either direct resume_text or a profile_id.
-    """
+
+    # Perform a high-precision comparison.
+
     if profile_id:
         profile = get_profile(profile_id)
         if profile and profile.get("raw_text"):

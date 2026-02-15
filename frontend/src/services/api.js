@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
+  // If running in desktop app (same origin), use relative path
+  // If running in Vite dev (localhost:5173), point to localhost:8000
+  baseURL: import.meta.env.MODE === 'production' ? '/api/v1' : 'http://localhost:8000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -159,10 +159,8 @@ async def get_analytics(task_id: str):
 
 @router.post("/simulate/{search_id}", tags=["Jobs"], summary="Run What-If Analysis")
 async def simulate_job_impact(search_id: str, request: SimulationRequest):
-    """
-    Simulate adding skills to a profile and measure the impact on job match scores.
-    Returns delta metrics (e.g., "Market Reach: 65% -> 78%").
-    """
+
+    # Simulate adding skills to a profile and measure the impact on job match scores.
     from backend.app.services.simulation_service import simulate_skill_impact
 
     if not request.profile_id or not request.added_skills:
@@ -190,9 +188,7 @@ class ComparisonRequest(BaseModel):
 
 @router.post("/compare", tags=["Jobs"], summary="Deep-Dive Job Comparison")
 async def compare_jobs(request: ComparisonRequest):
-    """
-    Perform a high-precision comparison using Cross-Encoders and LLM.
-    """
+    # Perform a high-precision comparison using Cross-Encoders and LLM.
     from backend.app.services.comparison_service import run_deep_dive_comparison
 
     try:

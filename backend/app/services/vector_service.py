@@ -1,12 +1,12 @@
-"""
-Vector Scoring Service — embedding generation and match scoring.
+# Vector Scoring Service — embedding generation and match scoring.
 
-Responsibilities:
-1. Generate user profile vectors (global + skill) — called by /embed endpoint.
-2. Batch-generate job vectors (global + skill) — called during scraper pipeline.
-3. Calculate hybrid match scores (60% Skill + 40% Global).
-4. Compute Market Reach score (% of jobs > 70% match).
-"""
+
+
+# 1. Generate user profile vectors (global + skill) — called by /embed endpoint.
+# 2. Batch-generate job vectors (global + skill) — called during scraper pipeline.
+# 3. Calculate hybrid match scores (60% Skill + 40% Global).
+# 4. Compute Market Reach score (% of jobs > 70% match).
+
 
 import logging
 import numpy as np
@@ -50,10 +50,7 @@ def generate_user_vectors(resume_text: str, confirmed_skills: List[str]) -> Dict
 
 
 def generate_job_vectors_batch(jobs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Batch-generate vectors for all jobs at once (fast).
-    Adds 'jd_global_vector' and 'jd_skill_vector' to each job dict.
-    """
+    # Batch-generate vectors for all jobs at once (fast).
     if not jobs:
         return jobs
 
@@ -91,11 +88,11 @@ def calculate_match_score(
     skill_weight: float = 0.6,
     global_weight: float = 0.4,
 ) -> float:
-    """
-    Calculate hybrid match score for a single job.
-    Score = (Skill Similarity * 0.6) + (Global Similarity * 0.4)
-    Returns a percentage (0-100).
-    """
+
+    # Calculate hybrid match score for a single job.
+    # Score = (Skill Similarity * 0.6) + (Global Similarity * 0.4)
+    # Returns a percentage (0-100).
+
     skill_sim = cosine_similarity(
         user_vectors["skill_vector"],
         job.get("jd_skill_vector", [0.0] * 384)

@@ -6,10 +6,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 def cleanup_stale_files(directory: str, max_age_seconds: int = 3600): # Default 1 hour
-    """
-    Deletes files in the specified directory that are older than max_age_seconds.
-    Target files: *.json (specifically task results)
-    """
     if not os.path.exists(directory):
         return
 

@@ -1,9 +1,7 @@
-"""
-Vector Engine — ML Layer for generating text embeddings.
+# Vector Engine — ML Layer for generating text embeddings.
 
-Uses 'sentence-transformers/all-MiniLM-L6-v2' (~80MB, 384 dimensions).
-Handles text cleaning and batch encoding.
-"""
+# Uses 'sentence-transformers/all-MiniLM-L6-v2' (~80MB, 384 dimensions).
+
 
 import os
 os.environ["USE_TF"] = "0"  # Prevent transformers from importing TensorFlow
@@ -94,10 +92,8 @@ class VectorEngine:
 
 
 class CrossEncoderEngine:
-    """
-    ML Layer for accurate pair-wise scoring using Cross-Encoders.
-    Relies on 'cross-encoder/ms-marco-MiniLM-L-6-v2' for high-precision matching.
-    """
+    # ML Layer for accurate pair-wise scoring using Cross-Encoders.
+    # Relies on 'cross-encoder/ms-marco-MiniLM-L-6-v2' for high-precision matching.
 
     def __init__(self):
         self.model = None

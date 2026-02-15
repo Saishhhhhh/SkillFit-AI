@@ -8,10 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """
-    Extract raw text from a PDF file using pdfplumber.
-    Accepts raw bytes (from UploadFile.read()).
-    """
     full_text = ""
 
     try:
@@ -33,12 +29,12 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
 
 
 def process_resume(file_bytes: bytes, filename: str) -> Dict[str, Any]:
-    """
-    Resume processing pipeline:
-    1. Extract text from PDF
-    2. Run 2-layer skill extraction (NER + Dictionary)
-    3. Return UI-ready JSON (NO vectors — user confirms skills first)
-    """
+
+    # Resume processing pipeline:
+    # 1. Extract text from PDF
+    # 2. Run 2-layer skill extraction (NER + Dictionary)
+    # 3. Return UI-ready JSON (NO vectors — user confirms skills first)
+
     logger.info(f"Processing resume: {filename}")
 
     # Step 1: Extract text

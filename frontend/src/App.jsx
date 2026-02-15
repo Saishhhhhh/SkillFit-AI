@@ -4,6 +4,7 @@ import ResumeReview from './pages/ResumeReview';
 import Dashboard from './pages/Dashboard';
 import JobListingPage from './pages/JobListingPage';
 import HistoryPage from './pages/HistoryPage';
+import ComparisonPage from './pages/ComparisonPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/jobs" element={<JobListingPage />} />
         <Route path="/history" element={<HistoryPage />} />
+        <Route path="/compare" element={<ComparisonPage />} />
       </Routes>
     </BrowserRouter>
   )

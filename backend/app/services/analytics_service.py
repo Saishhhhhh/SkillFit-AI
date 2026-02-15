@@ -1,13 +1,5 @@
-"""
-Analytics Service — Aggregates job data into dashboard-ready stats.
+# Analytics Service — Aggregates job data into dashboard-ready stats.
 
-Takes raw job listings from a search and produces:
-- Top Skills (standardized, deduplicated, noise-filtered)
-- Top Locations (normalized from messy scraper strings)
-- Top Companies
-- Top Job Roles (title clustering)
-- Score Distribution buckets
-"""
 
 import re
 import json
@@ -17,9 +9,7 @@ from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-# ═══════════════════════════════════════════════════════════
 # NOISE FILTERS
-# ═══════════════════════════════════════════════════════════
 
 # Skills that are too generic / not real tech skills
 SKILL_NOISE = {
@@ -91,17 +81,13 @@ CITY_ALIASES = {
 # LOCATION NORMALIZATION
 
 def normalize_locations(raw_location: str) -> List[str]:
-    """
-    Parse a messy location string into a list of clean city names.
-
-    Examples:
-        "Hyderabad, Chennai, Bengaluru"      → ["Hyderabad", "Chennai", "Bengaluru"]
-        "Amravati, Maharashtra (+1 other)"   → ["Amravati"]
-        "Bengaluru, Karnataka"               → ["Bengaluru"]
-        "Selaiyur, Chennai, Tamil Nadu"      → ["Chennai"]
-        "Malad West Dely, Mumbai, Maharashtra" → ["Mumbai"]
-        "India"                              → ["India (Remote/Pan-India)"]
-    """
+    # Examples:
+    #     "Hyderabad, Chennai, Bengaluru"      → ["Hyderabad", "Chennai", "Bengaluru"]
+    #     "Amravati, Maharashtra (+1 other)"   → ["Amravati"]
+    #     "Bengaluru, Karnataka"               → ["Bengaluru"]
+    #     "Selaiyur, Chennai, Tamil Nadu"      → ["Chennai"]
+    #     "Malad West Dely, Mumbai, Maharashtra" → ["Mumbai"]
+    #     "India"                              → ["India (Remote/Pan-India)"]
     if not raw_location or raw_location == "N/A":
         return ["Unknown"]
 
@@ -137,15 +123,11 @@ def normalize_locations(raw_location: str) -> List[str]:
 # TITLE NORMALIZATION
 
 def normalize_title(raw_title: str) -> str:
-    """
-    Normalize job titles to group similar ones.
-
-    Examples:
-        "Data scientist- Bang/Hyd/Chennai-Hybrid-MNC"  → "Data Scientist"
-        "Sr. Data Scientist"                            → "Senior Data Scientist"
-        "Data Science - Data Scientist"                 → "Data Scientist"
-        "Vice President - Lead Data Scientist (...)"    → "Lead Data Scientist"
-    """
+    # Examples:
+    #     "Data scientist- Bang/Hyd/Chennai-Hybrid-MNC"  → "Data Scientist"
+    #     "Sr. Data Scientist"                            → "Senior Data Scientist"
+    #     "Data Science - Data Scientist"                 → "Data Scientist"
+    #     "Vice President - Lead Data Scientist (...)"    → "Lead Data Scientist"
     if not raw_title:
         return "Unknown"
 
@@ -187,20 +169,7 @@ def normalize_title(raw_title: str) -> str:
 # MAIN ANALYTICS ENGINE
 
 def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Compute dashboard analytics from a list of job dicts.
-    
-    Returns a structured dict ready for frontend charting:
-    {
-        "total_jobs": 50,
-        "top_skills": [{"name": "python", "count": 45}, ...],
-        "top_locations": [{"name": "Bengaluru", "count": 20}, ...],
-        "top_companies": [{"name": "Google", "count": 5}, ...],
-        "top_roles": [{"name": "Data Scientist", "count": 15}, ...],
-        "score_distribution": [{"range": "90-100", "count": 2}, ...],
-        "portal_breakdown": [{"name": "naukri", "count": 20}, ...],
-    }
-    """
+
     if not jobs:
         return {
             "total_jobs": 0,
@@ -212,7 +181,7 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
             "portal_breakdown": [],
         }
 
-    # ─── Skill Aggregation (with standardization) ───
+    #  Skill Aggregation (with standardization) 
     from ml.utils.skill_standardizer import standardizer
 
     skill_counter = Counter()
@@ -227,7 +196,7 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
             if clean and clean not in SKILL_NOISE and len(clean) > 1:
                 skill_counter[clean] += 1
 
-    # ─── Location Aggregation ───
+    # Location Aggregation 
     location_counter = Counter()
     for job in jobs:
         raw_loc = job.get("location", "")
@@ -235,14 +204,14 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
         for city in cities:
             location_counter[city] += 1
 
-    # ─── Company Aggregation ───
+    # Company Aggregation 
     company_counter = Counter()
     for job in jobs:
         company = job.get("company", "").strip()
         if company and company != "N/A":
             company_counter[company] += 1
 
-    # ─── Role/Title Aggregation ───
+    # Role/Title Aggregation 
     role_counter = Counter()
     for job in jobs:
         raw_title = job.get("title", "")
@@ -250,7 +219,7 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
         if normalized and normalized != "Unknown":
             role_counter[normalized] += 1
 
-    # ─── Score Distribution ───
+    # Score Distribution 
     score_buckets = {
         "90-100": 0, "80-89": 0, "70-79": 0,
         "60-69": 0, "50-59": 0, "0-49": 0,
@@ -264,17 +233,17 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
         elif score >= 50: score_buckets["50-59"] += 1
         else: score_buckets["0-49"] += 1
 
-    # ─── Portal Breakdown ───
+    # Portal Breakdown
     portal_counter = Counter()
     for job in jobs:
         portal = job.get("portal", "unknown")
         portal_counter[portal] += 1
 
-    # ─── Statistics ───
+    # Statistics 
     total_score = sum(job.get("match_score", 0) for job in jobs)
     avg_match_score = round(total_score / len(jobs), 1) if jobs else 0
 
-    # ─── Work Mode Aggregation ───
+    # Work Mode Aggregation 
     work_mode_counter = Counter()
     for job in jobs:
         text = (job.get("location", "") + " " + job.get("title", "") + " " + job.get("description", "")[:500]).lower()
@@ -285,7 +254,7 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
         else:
             work_mode_counter["On-site"] += 1
 
-    # ─── Build Response ───
+    # Build Response
     return {
         "total_jobs": len(jobs),
         "avg_match_score": avg_match_score,
@@ -320,7 +289,7 @@ def compute_analytics(jobs: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def get_analytics_from_file(file_path: str) -> Dict[str, Any]:
-    """Compute analytics from a saved JSON results file."""
+    # Compute analytics from a saved JSON results file.
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -332,7 +301,7 @@ def get_analytics_from_file(file_path: str) -> Dict[str, Any]:
 
 
 def get_analytics_from_db(search_id: str) -> Dict[str, Any]:
-    """Compute analytics from DB for a given search_id."""
+    # Compute analytics from DB for a given search_id.
     try:
         from backend.app.db.crud import get_jobs_by_search
         jobs = get_jobs_by_search(search_id)

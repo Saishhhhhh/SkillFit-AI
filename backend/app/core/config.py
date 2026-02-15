@@ -1,7 +1,4 @@
-"""
-Centralized application configuration.
-All environment variables and settings are managed here.
-"""
+# Centralized application configuration.
 
 import os
 

@@ -1,7 +1,6 @@
-"""
-Simulation Service — 'What-If' Analysis Engine.
-Calculates how adding specific skills impacts a user's market match score.
-"""
+# Simulation Service — 'What-If' Analysis Engine.
+# Calculates how adding specific skills impacts a user's market match score.
+
 
 import logging
 from typing import List, Dict, Any

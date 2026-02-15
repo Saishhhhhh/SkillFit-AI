@@ -1,10 +1,8 @@
-"""
-Job Skill Extraction Service.
 
-Enriches scraped job data with extracted skills.
-- Naukri: Already has skills from the DOM → use them directly.
-- LinkedIn/Others: skills[] is empty → extract from description using the ML engine.
-"""
+# Job Skill Extraction Service.
+
+# Enriches scraped job data with extracted skills.
+
 
 import logging
 from typing import Dict, List, Any
@@ -14,12 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def extract_skills_from_job(job: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Enrich a single job posting with extracted skills.
-    
-    If the job already has skills (e.g., Naukri), keep them.
-    Otherwise, run the TwoLayerExtractor on the description text.
-    """
+
     existing_skills = job.get("skills", [])
 
     # If the scraper already provided skills, trust them but standardize
@@ -49,10 +42,7 @@ def extract_skills_from_job(job: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def enrich_job_listings(jobs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """
-    Batch-enrich a list of job postings with skills.
-    Called by scraper_engine after aggregation.
-    """
+
     logger.info(f"Enriching {len(jobs)} jobs with skill extraction...")
 
     for i, job in enumerate(jobs):

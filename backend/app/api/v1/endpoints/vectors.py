@@ -15,11 +15,9 @@ class VectorScoreRequest(BaseModel):
 
 @router.post("/calculate-score", tags=["Vector Operations"], summary="Calculate Match Score")
 async def calculate_score(request: VectorScoreRequest):
-    """
-    Calculate the match score between a user and a job based on their vectors.
-    Useful for 'Match Calculator' features or testing scoring logic.
-    Returns: Final Match Score (0-100) and breakdown.
-    """
+
+    # Calculate the match score between a user and a job based on their vectors.
+
     try:
         user_vectors = {
             "global_vector": request.user_global_vector,

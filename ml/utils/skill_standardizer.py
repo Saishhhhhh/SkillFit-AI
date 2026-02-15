@@ -21,7 +21,6 @@ class SkillStandardizer:
         self._load_aliases(alias_file_path)
 
     def _load_aliases(self, path: str):
-        """Load aliases from JSON file."""
         try:
             if not os.path.exists(path):
                 logger.warning(f"Alias file not found at {path}. Standardizer will only lowercase.")

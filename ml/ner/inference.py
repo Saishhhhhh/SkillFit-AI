@@ -21,19 +21,18 @@ SKILLS_JSON_PATH = os.path.join(BASE_DIR, "ml", "ner", "tech_skills.json") if ge
 
 
 class TwoLayerExtractor:
-    """
-    Two-layer skill extraction system (Lightweight & Fast):
+
+    # Two-layer skill extraction system (Lightweight & Fast):
     
-    1.  **AI Layer**: `amjad-awad/skill-extractor` (SpaCy model).
-    2.  **Dictionary Layer**: `tech_skills.json` (Exact match).
-    """
+    # 1.  **AI Layer**: `amjad-awad/skill-extractor` (SpaCy model).
+    # 2.  **Dictionary Layer**: `tech_skills.json` (Exact match).
+
 
     def __init__(self):
         self.nlp = None
         self._model_loaded = False
 
     def load_model(self):
-        """Load the SpaCy model and add the Dictionary Layer."""
         if self._model_loaded:
             return
 
@@ -55,9 +54,7 @@ class TwoLayerExtractor:
             self.nlp = None
 
     def _attach_dictionary_layer(self):
-        """
-        Injects the dictionary matcher into the SpaCy pipeline.
-        """
+
         if not self.nlp: return
 
         # Load skills from JSON

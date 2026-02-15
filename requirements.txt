@@ -12,3 +12,7 @@ huggingface_hub
 sentence-transformers
 numpy
 sqlite-vec
+langchain
+langchain-groq
+langchain-core
+pywebview

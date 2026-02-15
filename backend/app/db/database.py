@@ -1,6 +1,5 @@
-"""
-Database file: data/skillfit.db (project root)
-"""
+# Database file: data/skillfit.db (project root)
+
 
 import sqlite3
 import sqlite_vec
@@ -20,21 +19,19 @@ VECTOR_DIM = 384  # all-MiniLM-L6-v2 output dimension
 
 
 def serialize_vector(vec: List[float]) -> bytes:
-    """Convert a Python list of floats to a compact binary blob for sqlite-vec."""
+    # Convert a Python list of floats to a compact binary blob for sqlite-vec.
     return struct.pack(f"{len(vec)}f", *vec)
 
 
 def deserialize_vector(blob: bytes) -> List[float]:
-    """Convert a binary blob back to a Python list of floats."""
+    # Convert a binary blob back to a Python list of floats.
     n = len(blob) // 4  
     return list(struct.unpack(f"{n}f", blob))
 
 
 def get_connection() -> sqlite3.Connection:
-    """
-    Get a connection to the local SQLite database with sqlite-vec loaded.
-    Creates the data/ directory and database file if they don't exist.
-    """
+    # Get a connection to the local SQLite database with sqlite-vec loaded.
+    # Creates the data/ directory and database file if they don't exist.
     os.makedirs(DB_DIR, exist_ok=True)
 
     conn = sqlite3.connect(DB_PATH)
@@ -50,10 +47,9 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_db():
-    """
-    Create all tables if they don't exist.
-    Called once at app startup.
-    """
+    
+    # Create all tables if they don't exist.
+
     conn = get_connection()
     cursor = conn.cursor()
 
