@@ -178,6 +178,6 @@ Want to create your own `.exe` file?
 
 <div align="center">
 
-**Built with ❤️ from Saish**
+**Built with ❤️ by Saish**
 
 </div>
