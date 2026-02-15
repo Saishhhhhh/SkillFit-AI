@@ -118,9 +118,23 @@ Here are the major tools and technologies used to build SkillFit AI:
 
 ---
 
-## 📦 Installation
+## 📦 Installation & Setup
 
-### Option A: Run the Desktop App (Win/Mac/Linux)
+You can run SkillFit AI in 3 ways:
+
+### Option A: Download the Desktop App (Easiest) 🚀
+
+Simply download the latest release for Windows. No coding or installation required.
+
+1.  Go to the **[Releases Page](../../releases)**.
+2.  Download `SkillFit-AI-v1.0-Windows.zip`.
+3.  Extract the folder and run `SkillFitAI.exe`.
+
+---
+
+### Option B: Run from Source (For Developers) 🐍
+
+If you want to modify the code or run it on Mac/Linux:
 
 1.  **Clone the repository**:
     ```bash
@@ -138,7 +152,7 @@ Here are the major tools and technologies used to build SkillFit AI:
     ```bash
     cd frontend
     npm install
-    npm run build  # Build the UI for the desktop app
+    npm run build  # Compiles React to dist/ folder
     cd ..
     ```
 
@@ -147,11 +161,13 @@ Here are the major tools and technologies used to build SkillFit AI:
     python desktop_app.py
     ```
 
-### Option B: Build the Executable (.exe)
+---
 
-Want to create a shareable file?
+### Option C: Build the Executable Yourself 🛠️
 
-1.  Follow steps 1-3 above.
+Want to create your own `.exe` file?
+
+1.  Follow steps 1-3 in **Option B** above.
 2.  Run the build script:
     ```bash
     python build_exe.py
@@ -162,6 +178,6 @@ Want to create a shareable file?
 
 <div align="center">
 
-**Built with ❤️ for Saish**
+**Built with ❤️ from Saish**
 
 </div>
