@@ -1,8 +1,5 @@
-"""
-SkillFit-AI — Database CRUD Operations
-=======================================
-All read/write operations for profiles, searches, and jobs.
-"""
+# SkillFit-AI — Database CRUD Operations
+
 
 import json
 import uuid
@@ -207,10 +204,6 @@ def get_search_history(limit: int = 50, profile_id: Optional[str] = None) -> Lis
 def delete_search(search_id: str):
     """Delete a search and all its associated jobs."""
     conn = get_connection()
-    # Delete jobs first (and vec_jobs via trigger or manual?)
-    # vec_jobs references job_id. It's a virtual table, so we must delete manually if no trigger.
-    # But usually virtual tables don't support foreign keys well.
-    # We should delete from vec_jobs where job_id in (select id from jobs where search_id = ?)
     
     # 1. Get job IDs to delete from vec_jobs
     job_ids = conn.execute("SELECT id FROM jobs WHERE search_id = ?", (search_id,)).fetchall()

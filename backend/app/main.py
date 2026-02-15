@@ -55,9 +55,10 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
 # ── Health Check ──
-@app.get("/", tags=["Health"])
+# ── Health Check ──
+@app.get("/api/health", tags=["Health"])
 async def root():
-    return {"message": f"{settings.PROJECT_NAME} is running"}
+    return {"message": f"{settings.PROJECT_NAME} is running "}
 
 from backend.app.db.database import init_db
 
@@ -68,11 +69,17 @@ async def startup_event():
     asyncio.create_task(periodic_cleanup())
 
 async def periodic_cleanup():
+    import sys  # Import inside function is fine, but indentation matters
     while True:
         try:
             cleanup_stale_files(os.getcwd(), max_age_seconds=settings.CLEANUP_MAX_AGE_SECONDS)
 
-            scraper_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../scraper"))
+            if getattr(sys, 'frozen', False):
+                # Use _MEIPASS if frozen with PyInstaller
+                scraper_dir = os.path.join(sys._MEIPASS, "scraper")
+            else:
+                scraper_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../scraper"))
+
             cleanup_stale_files(scraper_dir, max_age_seconds=settings.CLEANUP_MAX_AGE_SECONDS)
         except Exception as e:
             logger.error(f"Cleanup error: {e}")

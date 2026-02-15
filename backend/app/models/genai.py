@@ -34,3 +34,13 @@ class PivotOption(BaseModel):
 
 class CareerPivotResponse(BaseModel):
     pivots: List[PivotOption]
+
+class MatchPatch(BaseModel):
+    bullet_point: str = Field(description="Explicitly phrased metric or skill point to add to resume")
+    reason: str = Field(description="Why this change is suggested based on the JD")
+
+class ComparisonResponse(BaseModel):
+    why_it_fits: str = Field(description="Brutal breakdown of why the candidate matches")
+    why_it_doesnt_fit: str = Field(description="Honest assessment of the missing gaps or deal-breakers")
+    resume_patches: List[MatchPatch] = Field(description="Actionable bullet points to improve the resume for this specific JD")
+    confidence_score: int = Field(description="A final confidence score from 0-100")

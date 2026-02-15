@@ -13,7 +13,10 @@ logger = logging.getLogger(__name__)
 
 task_registry = {}
 
-SCRAPER_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../scraper"))
+import sys
+
+SCRAPER_DIR = os.path.join(sys._MEIPASS, "scraper") if getattr(sys, 'frozen', False) else os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../scraper"))
+
 
 def run_scraper_engine(
     task_id: str, 

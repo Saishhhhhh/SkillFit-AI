@@ -13,7 +13,9 @@ from backend.app.models.genai import (
     RoleSuggestion,
     RoadmapMonth,
     RoadmapProject,
-    PivotOption
+    PivotOption,
+    ComparisonResponse,
+    MatchPatch
 )
 
 logger = logging.getLogger(__name__)
@@ -142,4 +144,47 @@ class GenAIService:
         except Exception as e:
             logger.error(f"Pivot suggestion failed: {e}")
             return CareerPivotResponse(pivots=[])
+
+    def analyze_match_gap(self, resume_text: str, jd_text: str) -> ComparisonResponse:
+        parser = PydanticOutputParser(pydantic_object=ComparisonResponse)
+        
+        prompt = PromptTemplate(
+            template="""
+            Act as a brutal Hiring Manager and a Top-tier Resume Expert.
+            You are analyzing a specific Resume against a specific Job Description.
+            
+            RESUME:
+            {resume_text}
+            
+            JOB DESCRIPTION:
+            {jd_text}
+            
+            Tasks:
+            1. Why It Fits: Provide a concise, high-impact reasoning for why this candidate is a strong match.
+            2. Why It Doesn't Fit: Be brutally honest about the gaps—missing technologies, lack of industry-specific context, or seniority misalignment.
+            3. Resume Patches: Provide 3-5 specific bullet points that the user should literally copy-paste or adapt into their resume to better align with THIS specific JD.
+            4. Confidence Score: A percentage representing how likely this person is to get an interview based strictly on their current resume content.
+            
+            {format_instructions}
+            """,
+            input_variables=["resume_text", "jd_text"],
+            partial_variables={"format_instructions": parser.get_format_instructions()},
+        )
+        
+        try:
+            response = self.llm.invoke(prompt.format(
+                resume_text=resume_text[:4000],
+                jd_text=jd_text[:4000]
+            ))
+            content = response.content if hasattr(response, 'content') else str(response)
+            return parser.parse(content)
+        except Exception as e:
+            logger.error(f"Deep-dive analysis failed: {e}")
+            return ComparisonResponse(
+                why_it_fits="N/A",
+                why_it_doesnt_fit="Error analyzing match.",
+                resume_patches=[],
+                confidence_score=0
+            )
+
 

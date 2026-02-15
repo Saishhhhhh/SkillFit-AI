@@ -1,4 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from pydantic import BaseModel
+from typing import Optional, List, Any
 import uuid
 import os
 import json
@@ -178,3 +180,31 @@ async def simulate_job_impact(search_id: str, request: SimulationRequest):
     except Exception as e:
         logger.error(f"Simulation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
+
+class ComparisonRequest(BaseModel):
+    resume_text: Optional[str] = None
+    profile_id: Optional[str] = None
+    jd_text: str
+    api_key: str  
+
+
+@router.post("/compare", tags=["Jobs"], summary="Deep-Dive Job Comparison")
+async def compare_jobs(request: ComparisonRequest):
+    """
+    Perform a high-precision comparison using Cross-Encoders and LLM.
+    """
+    from backend.app.services.comparison_service import run_deep_dive_comparison
+
+    try:
+        result = run_deep_dive_comparison(
+            resume_text=request.resume_text,
+            jd_text=request.jd_text,
+            api_key=request.api_key,
+            profile_id=request.profile_id
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Deep-dive failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
