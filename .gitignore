@@ -66,6 +66,8 @@ scraper/results/
 .env.local
 .env.*.local
 
+skillfit_v2_build_plan.md
+
 # IDEs
 .vscode/
 .idea/
