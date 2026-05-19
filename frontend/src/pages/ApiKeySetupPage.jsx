@@ -1,12 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { saveKeysLocally } from '../store/userSlice';
+import { api } from '../lib/api';
 
 export default function ApiKeySetupPage() {
   const dispatch = useDispatch();
   const apiKeys = useSelector((state) => state.user.apiKeys);
   const apiKeysVerified = useSelector((state) => state.user.apiKeysVerified);
   
+  const [backendStatus, setBackendStatus] = useState('untested');
+
+  async function testBackendConnection() {
+    setBackendStatus('testing...');
+    try {
+      const res = await api.get('/api/health');
+      if (res.data.status === 'ok') {
+        setBackendStatus('connected! ✅');
+      } else {
+        setBackendStatus('error ❌');
+      }
+    } catch (e) {
+      setBackendStatus('failed to connect ❌');
+      console.error(e);
+    }
+  }
+
   const [groqKey, setGroqKey] = useState(apiKeys.groq || '');
   
   const availableSources = [
@@ -63,6 +81,15 @@ export default function ApiKeySetupPage() {
     <div style={{ maxWidth: '600px', margin: '40px auto', padding: '20px', fontFamily: 'sans-serif' }}>
       <h1>setup your api keys</h1>
       <p>keys are saved locally in your browser and sent securely to the backend when needed.</p>
+      <div style={{ marginBottom: '20px', padding: '15px', backgroundColor: '#e9ecef', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <strong>Backend Status: </strong> 
+          <span>{backendStatus}</span>
+        </div>
+        <button onClick={testBackendConnection} style={{ padding: '5px 10px', cursor: 'pointer' }}>
+          Ping Backend
+        </button>
+      </div>
       
       {/* groq key section */}
       <div style={{ marginBottom: '20px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
