@@ -2,8 +2,8 @@ import uuid
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
 
-from backend.app.services.resume_parser import full_parse_pipeline
-from backend.app.ml.embeddings import embed_text
+from app.services.resume_parser import full_parse_pipeline
+from app.ml.embeddings import embed_text
 
 router = APIRouter(prefix="/api/resume", tags=["resume"])
 

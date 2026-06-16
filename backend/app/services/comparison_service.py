@@ -1,8 +1,8 @@
 import logging
 from typing import Dict, Any, List
 from ml.embeddings.vectorizer import cross_encoder_engine
-from backend.app.services.genai_service import GenAIService, ModelProvider
-from backend.app.db.crud import get_profile
+from app.services.genai_service import GenAIService, ModelProvider
+from app.db.crud import get_profile
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +21,7 @@ def run_deep_dive_comparison(resume_text: str = None, jd_text: str = None, api_k
     # 1. Cross-Encoder Scoring (Query: JD, Document: Resume)
     logger.info(f"Running Cross-Encoder Deep Dive. Resume length: {len(resume_text)}, JD length: {len(jd_text)}")
     scores = cross_encoder_engine.predict([(jd_text, resume_text)])
-    ce_confidence = round(scores[0], 1)
+    ce_confidence = float(round(scores[0], 1))
 
     # 2. LLM Gap Analysis
     logger.info("Triggering LLM Gap Analysis...")

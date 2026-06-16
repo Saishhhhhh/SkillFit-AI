@@ -15,4 +15,3 @@ sqlite-vec
 langchain
 langchain-groq
 langchain-core
-pywebview

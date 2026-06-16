@@ -43,7 +43,6 @@
 - 🌍 **Real-Time Job Scraping**: Aggregates live jobs from LinkedIn, Indeed, Glassdoor, Naukri, and Google Jobs.
 - 🧠 **AI Gap Analysis**: Uses Vector Embeddings (SBERT) to mathematically compare profiles against job descriptions.
 - 💡 **Smart Recommendations**: Generates personalized learning roadmaps and role suggestions using Llama-3 (via Groq).
-- 🖥️ **Desktop Experience**: Fast, native experience powered by PyWebView, keeping your data local.
 
 ---
 
@@ -76,9 +75,6 @@ SkillFit-AI/
 │   ├── linkedin.py       # LinkedIn Scraper
 │   ├── Indeed.py         # Indeed Scraper
 │   └── Glassdoor.py      # Playwright-based Glassdoor Scraper
-└── 📦 App/               # Desktop Application Logic
-    ├── desktop_app.py    # PyWebView Entry Point
-    └── build_exe.py      # PyInstaller Build Script
 ```
 
 ---
@@ -95,11 +91,10 @@ Here are the major tools and technologies used to build SkillFit AI:
 ![LangChain](https://img.shields.io/badge/LangChain-1C3C3C.svg?style=flat&logo=LangChain&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57.svg?style=flat&logo=SQLite&logoColor=white)
 
-### ⚙️ Frontend & Desktop
+### ⚙️ Frontend
 ![React](https://img.shields.io/badge/React-61DAFB.svg?style=flat&logo=React&logoColor=black)
 ![Vite](https://img.shields.io/badge/Vite-646CFF.svg?style=flat&logo=Vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC.svg?style=flat&logo=tailwind-css&logoColor=white)
-![Electron Alternative](https://img.shields.io/badge/PyWebView-FFD43B.svg?style=flat&logo=python&logoColor=black)
 
 ---
 
@@ -120,22 +115,6 @@ Here are the major tools and technologies used to build SkillFit AI:
 
 ## 📦 Installation & Setup
 
-You can run SkillFit AI in 3 ways:
-
-### Option A: Download the Desktop App (Easiest) 🚀
-
-Simply download the latest release for Windows. No coding or installation required.
-
-1.  Go to the **[Releases Page](../../releases)**.
-2.  Download `SkillFit-AI-v1.0-Windows.zip`.
-3.  Extract the folder and run `SkillFitAI.exe`.
-
----
-
-### Option B: Run from Source (For Developers) 🐍
-
-If you want to modify the code or run it on Mac/Linux:
-
 1.  **Clone the repository**:
     ```bash
     git clone https://github.com/Saishhhhhh/SkillFit-AI.git
@@ -148,31 +127,19 @@ If you want to modify the code or run it on Mac/Linux:
     playwright install  # Required for scrapers
     ```
 
-3.  **Install Frontend Dependencies**:
+3.  **Run the Backend**:
+    ```bash
+    cd backend
+    uvicorn app.main:app --reload
+    ```
+
+4.  **Run the Frontend**:
+    Open a new terminal and run:
     ```bash
     cd frontend
     npm install
-    npm run build  # Compiles React to dist/ folder
-    cd ..
+    npm run dev
     ```
-
-4.  **Run the App**:
-    ```bash
-    python desktop_app.py
-    ```
-
----
-
-### Option C: Build the Executable Yourself 🛠️
-
-Want to create your own `.exe` file?
-
-1.  Follow steps 1-3 in **Option B** above.
-2.  Run the build script:
-    ```bash
-    python build_exe.py
-    ```
-3.  Find your app in `dist/SkillFitAI/SkillFitAI.exe`.
 
 ---
 

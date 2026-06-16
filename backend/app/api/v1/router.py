@@ -4,7 +4,7 @@ Central API Router for v1.
 
 from fastapi import APIRouter
 
-from backend.app.api.v1.endpoints import profile, jobs, vectors, history
+from app.api.v1.endpoints import profile, jobs, vectors, history
 
 api_router = APIRouter()
 
@@ -21,5 +21,5 @@ api_router.include_router(vectors.router, prefix="/vectors", tags=["Vector Opera
 api_router.include_router(history.router, prefix="/history", tags=["History"])
 
 # GenAI
-from backend.app.api.v1.endpoints import genai
+from app.api.v1.endpoints import genai
 api_router.include_router(genai.router, prefix="/genai", tags=["GenAI"])

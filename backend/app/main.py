@@ -3,11 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import logging
 import os
+import sys
 import asyncio
 
-from backend.app.core.config import settings
-from backend.app.api.v1.router import api_router
-from backend.app.services.cleanup import cleanup_stale_files
+# Add the project root to sys.path so that 'ml' and 'scraper' can be imported
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
+
+from app.core.config import settings
+from app.api.v1.router import api_router
+from app.services.cleanup import cleanup_stale_files
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -58,7 +62,7 @@ app.include_router(api_router, prefix=settings.API_PREFIX)
 async def root():
     return {"message": f"{settings.PROJECT_NAME} is running "}
 
-from backend.app.db.database import init_db
+from app.db.database import init_db
 
 # Background Cleanup
 @app.on_event("startup")

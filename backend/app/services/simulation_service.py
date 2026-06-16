@@ -5,8 +5,8 @@
 import logging
 from typing import List, Dict, Any
 
-from backend.app.db.crud import get_profile, get_job_vectors_by_search, get_jobs_by_search
-from backend.app.services.vector_service import generate_user_vectors, calculate_match_score
+from app.db.crud import get_profile, get_job_vectors_by_search, get_jobs_by_search
+from app.services.vector_service import generate_user_vectors, calculate_match_score
 
 logger = logging.getLogger(__name__)
 

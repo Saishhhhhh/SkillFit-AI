@@ -303,7 +303,7 @@ def get_analytics_from_file(file_path: str) -> Dict[str, Any]:
 def get_analytics_from_db(search_id: str) -> Dict[str, Any]:
     # Compute analytics from DB for a given search_id.
     try:
-        from backend.app.db.crud import get_jobs_by_search
+        from app.db.crud import get_jobs_by_search
         jobs = get_jobs_by_search(search_id)
         return compute_analytics(jobs)
     except Exception as e:

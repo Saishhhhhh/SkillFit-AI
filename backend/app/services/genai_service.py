@@ -6,7 +6,7 @@ from langchain_groq import ChatGroq
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
-from backend.app.models.genai import (
+from app.models.genai import (
     RoleSuggestionsResponse, 
     LearningRoadmapResponse, 
     CareerPivotResponse,

@@ -6,8 +6,8 @@ import os
 import json
 import logging
 
-from backend.app.services.scraper_engine import run_scraper_engine, task_registry
-from backend.app.models.job import SearchRequest, SimulationRequest
+from app.services.scraper_engine import run_scraper_engine, task_registry
+from app.models.job import SearchRequest, SimulationRequest
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ async def search_jobs(request: SearchRequest, background_tasks: BackgroundTasks)
             "skill_vector": request.user_vectors.skill_vector,
         }
     elif request.profile_id:
-        from backend.app.db.crud import get_profile
+        from app.db.crud import get_profile
         profile = get_profile(request.profile_id)
         if profile and profile.get("global_vector") and profile.get("skill_vector"):
             user_vectors_dict = {
@@ -122,7 +122,7 @@ async def get_analytics(task_id: str):
     - Score Distribution
     - Portal Breakdown
     """
-    from backend.app.services.analytics_service import compute_analytics, get_analytics_from_db
+    from app.services.analytics_service import compute_analytics, get_analytics_from_db
 
     task = task_registry.get(task_id)
 
@@ -161,7 +161,7 @@ async def get_analytics(task_id: str):
 async def simulate_job_impact(search_id: str, request: SimulationRequest):
 
     # Simulate adding skills to a profile and measure the impact on job match scores.
-    from backend.app.services.simulation_service import simulate_skill_impact
+    from app.services.simulation_service import simulate_skill_impact
 
     if not request.profile_id or not request.added_skills:
         raise HTTPException(status_code=400, detail="Profile ID and skills required")
@@ -189,7 +189,7 @@ class ComparisonRequest(BaseModel):
 @router.post("/compare", tags=["Jobs"], summary="Deep-Dive Job Comparison")
 async def compare_jobs(request: ComparisonRequest):
     # Perform a high-precision comparison using Cross-Encoders and LLM.
-    from backend.app.services.comparison_service import run_deep_dive_comparison
+    from app.services.comparison_service import run_deep_dive_comparison
 
     try:
         result = run_deep_dive_comparison(

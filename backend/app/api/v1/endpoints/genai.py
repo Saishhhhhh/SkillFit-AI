@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional
 
-from backend.app.services.genai_service import GenAIService, ModelProvider
-from backend.app.models.genai import (
+from app.services.genai_service import GenAIService, ModelProvider
+from app.models.genai import (
     RoleSuggestionsResponse, 
     LearningRoadmapResponse, 
     CareerPivotResponse,

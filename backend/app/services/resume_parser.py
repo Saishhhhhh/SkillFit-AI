@@ -1,9 +1,9 @@
 import instructor
 from groq import Groq
 
-from backend.app.schemas.resume import ResumeExtraction
-from backend.app.ml.pdf_extractor import extract_text_from_pdf, segment_sections
-from backend.app.ml.skill_extractor import extract_skills_layer1, normalize_skills_layer2
+from app.schemas.resume import ResumeExtraction
+from app.ml.pdf_extractor import extract_text_from_pdf, segment_sections
+from app.ml.skill_extractor import extract_skills_layer1, normalize_skills_layer2
 
 def extract_implicit_skills(resume_text, layer12_skills, groq_key):
     

@@ -7,7 +7,7 @@ from typing import List, Dict, Optional, Any
 import time
 import logging
 import threading
-from backend.app.services.job_service import enrich_job_listings
+from app.services.job_service import enrich_job_listings
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +148,7 @@ def run_scraper_engine(
 
     if user_vectors:
         try:
-            from backend.app.services.vector_service import score_jobs_against_user
+            from app.services.vector_service import score_jobs_against_user
             # Keep vectors for DB extraction
             scored = score_jobs_against_user(user_vectors, aggregated_results, keep_vectors=True)
             aggregated_results = scored["jobs"]
@@ -193,7 +193,7 @@ def run_scraper_engine(
 
     # Save to database
     try:
-        from backend.app.db.crud import save_search, save_jobs_batch, update_search_scores
+        from app.db.crud import save_search, save_jobs_batch, update_search_scores
 
         save_search(
             search_id=task_id,

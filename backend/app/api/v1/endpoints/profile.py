@@ -2,10 +2,10 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 import logging
 import uuid
 
-from backend.app.services.resume_service import process_resume
-from backend.app.services.vector_service import generate_user_vectors
-from backend.app.models.job import UserProfile
-from backend.app.db.crud import save_profile, update_profile_vectors, get_profile
+from app.services.resume_service import process_resume
+from app.services.vector_service import generate_user_vectors
+from app.models.job import UserProfile
+from app.db.crud import save_profile, update_profile_vectors, get_profile
 
 logger = logging.getLogger(__name__)
 

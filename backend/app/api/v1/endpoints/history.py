@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List, Dict, Any
 
-from backend.app.db.crud import get_all_profiles, get_search_history, get_profile
+from app.db.crud import get_all_profiles, get_search_history, get_profile
 
 router = APIRouter()
 
@@ -22,7 +22,7 @@ async def list_profile_searches(profile_id: str):
     searches = get_search_history(limit=100, profile_id=profile_id)
     return searches
 
-from backend.app.db.crud import delete_profile, delete_search
+from app.db.crud import delete_profile, delete_search
 
 @router.delete("/profiles/{profile_id}")
 async def remove_profile(profile_id: str):

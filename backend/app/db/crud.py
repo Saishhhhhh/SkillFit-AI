@@ -6,7 +6,7 @@ import uuid
 import logging
 from typing import Dict, List, Any, Optional
 
-from backend.app.db.database import get_connection, serialize_vector, deserialize_vector
+from app.db.database import get_connection, serialize_vector, deserialize_vector
 
 logger = logging.getLogger(__name__)
 
